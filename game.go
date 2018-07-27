@@ -3,7 +3,9 @@ package cardsagainstdiscord
 import (
 	"fmt"
 	"github.com/jonas747/discordgo"
+	"log"
 	"math/rand"
+	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -33,7 +35,7 @@ const (
 )
 
 const (
-	PreRoundDelayDuration = time.Second * 5
+	PreRoundDelayDuration = time.Second * 10
 	PickResponseDuration  = time.Second * 45
 	PickWinnerDuration    = time.Second * 60
 	GameExpireAfter       = time.Second * 180
@@ -41,22 +43,22 @@ const (
 
 var (
 	CardSelectionEmojis = []string{
-		"\u1F1E6", // A
-		"\u1F1E7", // B
-		"\u1F1E8", // C
-		"\u1F1E9", // D
-		"\u1F1EA", // E
-		"\u1F1EB", // F
-		"\u1F1EC", // G
-		"\u1F1ED", // H
-		"\u1F1EE", // I
-		"\u1F1EF", // J
-		"\u1F1F0", // K
+		"🇦", // A
+		"🇧", // B
+		"🇨", // C
+		"🇩", // D
+		"🇪", // E
+		"🇫", // F
+		"🇬", // G
+		"🇭", // H
+		"🇮", // I
+		"🇯", // J
+		"🇰", // K
 	}
 
 	JoinEmoji  = "➕"
 	LeaveEmoji = "➖"
-	PlayEmoji  = "▶️"
+	PlayEmoji  = "▶"
 )
 
 type Game struct {
@@ -89,6 +91,13 @@ type Game struct {
 	CurrentPropmpt *PromptCard
 
 	LastMenuMessage int64
+
+	Responses []*PickedResonse
+}
+
+type PickedResonse struct {
+	Player     *Player
+	Selections []ResponseCard
 }
 
 func (g *Game) Created() {
@@ -102,7 +111,7 @@ func (g *Game) Created() {
 
 	g.LastMenuMessage = msg.ID
 
-	g.addCommonMenuReactions(msg.ID)
+	go g.addCommonMenuReactions(msg.ID, true)
 }
 
 // AddPlayer attempts to add a player to the game, if it fails (hit the limit for example) then it returns false
@@ -133,7 +142,7 @@ func (g *Game) addPlayer(id int64, username string) bool {
 
 	g.Players = append(g.Players, p)
 
-	go g.sendAnnouncment(fmt.Sprintf("<@%s> Joined the game! (%d/%d)", id, len(g.Players), g.PlayerLimit), false)
+	go g.sendAnnouncment(fmt.Sprintf("<@%d> Joined the game! (%d/%d)", id, len(g.Players), g.PlayerLimit), false)
 	return true
 }
 
@@ -157,7 +166,7 @@ func (g *Game) removePlayer(id int64) {
 		return
 	}
 
-	go g.sendAnnouncment(fmt.Sprintf("<@%s> Left the game (%d/%d)", id, len(g.Players), g.PlayerLimit), false)
+	go g.sendAnnouncment(fmt.Sprintf("<@%d> Left the game (%d/%d)", id, len(g.Players), g.PlayerLimit), false)
 
 	if g.CurrentCardCzar == id && g.State != GameStatePreGame && g.State != GameStatePreRoundDelay {
 		g.nextRound()
@@ -167,6 +176,7 @@ func (g *Game) removePlayer(id int64) {
 func (g *Game) setState(state GameState) {
 	g.State = state
 	g.StateEntered = time.Now()
+	log.Println("Set ", g.MasterChannel, " state to ", state)
 }
 
 func (g *Game) nextRound() {
@@ -222,10 +232,12 @@ func (g *Game) sendAnnouncment(msg string, allPlayers bool) {
 		return
 	}
 
-	for _, v := range g.Players {
-		go func(channel int64) {
-			g.Session.ChannelMessageSend(channel, msg)
-		}(v.Channel)
+	if allPlayers {
+		for _, v := range g.Players {
+			go func(channel int64) {
+				g.Session.ChannelMessageSend(channel, msg)
+			}(v.Channel)
+		}
 	}
 
 	g.Session.ChannelMessageSend(g.MasterChannel, msg)
@@ -235,6 +247,7 @@ func (g *Game) Tick() {
 	g.Lock()
 	defer g.Unlock()
 
+	log.Println(time.Since(g.LastAction))
 	if time.Since(g.LastAction) > GameExpireAfter || len(g.Players) < 1 {
 		g.gameExpired()
 		return
@@ -268,6 +281,7 @@ func (g *Game) Tick() {
 				g.donePickingResponses()
 			} else {
 				// No one picked any cards...?
+				g.sendAnnouncment("No one picked any cards, going to next round", false)
 				g.nextRound()
 			}
 		}
@@ -284,6 +298,20 @@ func (g *Game) startRound() {
 		g.setState(GameStatePreGame)
 		return
 	}
+
+	// Remove previous selected cards from players decks
+	for _, v := range g.Responses {
+		for _, sel := range v.Selections {
+			for i, c := range v.Player.Cards {
+				if c == sel {
+					v.Player.Cards = append(v.Player.Cards[:i], v.Player.Cards[i+1:]...)
+					break
+				}
+			}
+		}
+	}
+
+	g.Responses = nil
 
 	for _, v := range g.Players {
 		v.Playing = true
@@ -374,50 +402,56 @@ func (g *Game) presentStartRound() {
 			cardCzarUsername = player.Username
 		}
 
-		go func() {
-			player.PresentBoard(g.Session, g.CurrentPropmpt, g.CurrentCardCzar)
-		}()
+		go func(p *Player) {
+			p.PresentBoard(g.Session, g.CurrentPropmpt, g.CurrentCardCzar)
+		}(player)
 	}
 
 	// Present the main board
-	msg := fmt.Sprintf("Next round started! **%s** is the Card Czar!\n\n%s", cardCzarUsername, strings.Replace(g.CurrentPropmpt.Prompt, "%s", "____", -1))
+	msg := fmt.Sprintf("---------------------\nNext round started! **%s** is the Card Czar!\n\n**%s**\n\nCheck your dm for your card and pick your cards there, return here afterwards, you got 45 seconds.",
+		cardCzarUsername, strings.Replace(g.CurrentPropmpt.Prompt, "%s", "____", -1))
 	g.Session.ChannelMessageSend(g.MasterChannel, msg)
 }
 
 func (g *Game) donePickingResponses() {
 	// Send a message to players that missed the round
 	for _, v := range g.Players {
-		if !v.Playing {
+		if !v.Playing || v.ID == g.CurrentCardCzar {
 			continue
 		}
 
 		if len(v.SelectedCards) < g.CurrentPropmpt.NumPick {
 			go g.Session.ChannelMessageSend(v.Channel, fmt.Sprintf("You didn't respond in time... winner is being picked in <#%d>", g.MasterChannel))
 			v.SelectedCards = nil
+			continue
 		}
+
+		selections := make([]ResponseCard, 0, len(v.SelectedCards))
+		for _, sel := range v.SelectedCards {
+			selections = append(selections, v.Cards[sel])
+		}
+
+		g.Responses = append(g.Responses, &PickedResonse{
+			Player:     v,
+			Selections: selections,
+		})
 	}
 
 	// Shows all the picks in both dm's and main channel
 	g.presentPickedResponseCards()
+	g.setState(GameStatePickingWinner)
 }
 
 func (g *Game) presentPickedResponseCards() {
 	content := fmt.Sprintf("Cards have been picked, pick the best one(s) <@%d>!\n\n**%s**:\n\n", g.CurrentCardCzar, strings.Replace(g.CurrentPropmpt.Prompt, "%s", "____", -1))
 
-	numOptions := 0
-	for _, v := range g.Players {
-		if !v.Playing || len(v.SelectedCards) < g.CurrentPropmpt.NumPick {
-			continue
+	for i, v := range g.Responses {
+		strCards := make([]interface{}, len(v.Selections))
+		for j, resp := range v.Selections {
+			strCards[j] = "**" + string(resp) + "**"
 		}
 
-		strCards := make([]interface{}, len(v.SelectedCards))
-		for i, ci := range v.SelectedCards {
-			card := v.Cards[ci]
-			strCards[i] = string(card)
-		}
-
-		content += CardSelectionEmojis[numOptions] + ": " + fmt.Sprintf(g.CurrentPropmpt.Prompt, strCards...) + "\n\n"
-		numOptions++
+		content += CardSelectionEmojis[i] + ": " + fmt.Sprintf(g.CurrentPropmpt.Prompt, strCards...) + "\n\n"
 	}
 
 	msg, err := g.Session.ChannelMessageSend(g.MasterChannel, content)
@@ -425,28 +459,38 @@ func (g *Game) presentPickedResponseCards() {
 		return
 	}
 
+	numOptions := len(g.Responses)
 	go func() {
 		for i := 0; i < numOptions; i++ {
-			g.Session1.MessageReactionAdd(g.MasterChannel, msg.ID, CardSelectionEmojis[i])
+			g.Session.MessageReactionAdd(g.MasterChannel, msg.ID, CardSelectionEmojis[i])
 		}
 
-		g.addCommonMenuReactions(msg.ID)
+		g.addCommonMenuReactions(msg.ID, false)
 	}()
 
 	g.LastMenuMessage = msg.ID
 }
 
 func (g *Game) cardzarExpired() {
+	msg, err := g.Session.ChannelMessageSend(g.MasterChannel, fmt.Sprintf("<%d> didn't pick a winner in %d seconds, skipping round...", g.CurrentCardCzar, int(PickWinnerDuration.Seconds())))
+	if err == nil {
+		go g.addCommonMenuReactions(msg.ID, false)
+	}
 
+	g.setState(GameStatePreRoundDelay)
 }
 
 func (g *Game) gameExpired() {
+	g.Session.ChannelMessageSend(g.MasterChannel, "CAH Game expired")
+	go g.Manager.RemoveGame(g.MasterChannel)
 }
 
-func (g *Game) addCommonMenuReactions(mID int64) {
+func (g *Game) addCommonMenuReactions(mID int64, play bool) {
 	g.Session.MessageReactionAdd(g.MasterChannel, mID, JoinEmoji)
 	g.Session.MessageReactionAdd(g.MasterChannel, mID, LeaveEmoji)
-	g.Session.MessageReactionAdd(g.MasterChannel, mID, PlayEmoji)
+	if play {
+		g.Session.MessageReactionAdd(g.MasterChannel, mID, PlayEmoji)
+	}
 }
 
 func (g *Game) HandleRectionAdd(ra *discordgo.MessageReactionAdd) {
@@ -469,24 +513,32 @@ func (g *Game) HandleRectionAdd(ra *discordgo.MessageReactionAdd) {
 			}
 
 			member, err := g.Session.GuildMember(g.GuildID, ra.UserID)
+			if member.User.Bot {
+				return
+			}
+
 			if err == nil {
 				g.addPlayer(ra.UserID, member.User.Username)
 			}
 			g.LastAction = time.Now()
 			return
 		case LeaveEmoji:
-			g.RemovePlayer(ra.UserID)
+			g.removePlayer(ra.UserID)
 			g.LastAction = time.Now()
 			return
 		case PlayEmoji:
+			log.Println("Pressed play")
 			g.LastAction = time.Now()
 			if g.State == GameStatePreGame && g.GameMaster == ra.UserID {
 				g.setState(GameStatePreRoundDelay)
-				go g.sendAnnouncment("Starting in 5 seconds", false)
+				go g.sendAnnouncment("Starting in 10 seconds", false)
 			}
 
 			return
+		default:
+			log.Println("Unknown: ", ra.Emoji.Name)
 		}
+
 	}
 
 	// From here on out only players can take actions
@@ -506,9 +558,52 @@ func (g *Game) HandleRectionAdd(ra *discordgo.MessageReactionAdd) {
 		if ra.MessageID != g.LastMenuMessage || player.ID != g.CurrentCardCzar {
 			return
 		}
+		emojiIndex := -1
+		for i, v := range CardSelectionEmojis {
+			if v == ra.Emoji.Name {
+				emojiIndex = i
+				break
+			}
+		}
 
+		if emojiIndex == -1 || emojiIndex >= len(g.Responses) {
+			return
+		}
+
+		winner := g.Responses[emojiIndex]
+		winner.Player.Wins++
+		g.presentWinner(winner)
+		g.setState(GameStatePreGame)
 	}
 
+}
+
+func (g *Game) presentWinner(winningPick *PickedResonse) {
+
+	// Sort the players by the number of wins
+	// note: this wont change the cardzar order as thats done as lowest -> highest user ids
+	sort.Slice(g.Players, func(i int, j int) bool {
+		return g.Players[i].Wins > g.Players[j].Wins
+	})
+
+	standings := ""
+	for _, v := range g.Players {
+		standings += fmt.Sprintf("%20s: %d\n", v.Username, v.Wins)
+	}
+
+	args := make([]interface{}, len(winningPick.Selections))
+	for i, v := range winningPick.Selections {
+		args[i] = "**" + v + "**"
+	}
+	winnerCard := fmt.Sprintf(g.CurrentPropmpt.Prompt, args...)
+
+	content := fmt.Sprintf("picked <@%d>'s card(s)!\n%s\n\n**Standings:**\n%s\n\nNext round in 10 seconds...", winningPick.Player.ID, winnerCard, standings)
+	msg, err := g.Session.ChannelMessageSend(g.MasterChannel, content)
+	if err != nil {
+		return
+	}
+
+	g.addCommonMenuReactions(msg.ID, false)
 }
 
 func (g *Game) playerPickedResponseReaction(player *Player, ra *discordgo.MessageReactionAdd) {
@@ -548,7 +643,7 @@ func (g *Game) playerPickedResponseReaction(player *Player, ra *discordgo.Messag
 	if len(player.SelectedCards) >= g.CurrentPropmpt.NumPick {
 		respMsg += fmt.Sprintf(", go to <#%d> and wait for the other players to finish their selections, the winner will be picked there", g.MasterChannel)
 	} else {
-		respMsg += fmt.Sprintf(", select %d more cards")
+		respMsg += fmt.Sprintf(", select %d more cards", g.CurrentPropmpt.NumPick-len(player.SelectedCards))
 	}
 
 	go g.Session.ChannelMessageSend(player.Channel, respMsg)
@@ -570,16 +665,16 @@ type Player struct {
 }
 
 func (p *Player) PresentBoard(session *discordgo.Session, currentPrompt *PromptCard, currentCardCzar int64) {
-	msg := "**Next round:**\n" + strings.Replace(currentPrompt.Prompt, "%s", "____", -1)
-	msg += "\n\n"
 	if currentCardCzar == p.ID {
-		msg += "You are the Card Czar! wait until the other players have picked their cards and then pick the best one."
-	} else {
-		msg += fmt.Sprintf("Pick %d cards:\n", currentPrompt.NumPick)
+		return
+	}
 
-		for i, v := range p.Cards {
-			msg += CardSelectionEmojis[i] + ": " + string(v) + "\n"
-		}
+	msg := "-----------\n**Next round:**\n" + strings.Replace(currentPrompt.Prompt, "%s", "____", -1)
+	msg += "\n\n"
+	msg += fmt.Sprintf("Pick %d cards:\n", currentPrompt.NumPick)
+
+	for i, v := range p.Cards {
+		msg += CardSelectionEmojis[i] + ": " + string(v) + "\n"
 	}
 
 	resp, err := session.ChannelMessageSend(p.Channel, msg)
@@ -594,5 +689,4 @@ func (p *Player) PresentBoard(session *discordgo.Session, currentPrompt *PromptC
 			session.MessageReactionAdd(p.Channel, resp.ID, CardSelectionEmojis[i])
 		}
 	}
-
 }

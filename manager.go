@@ -3,7 +3,9 @@ package cardsagainstdiscord
 import (
 	"github.com/jonas747/discordgo"
 	"github.com/pkg/errors"
+	"log"
 	"sync"
+	"time"
 )
 
 var (
@@ -40,10 +42,12 @@ func (gm *GameManager) CreateGame(guildID int64, channelID int64, userID int64, 
 
 	game := &Game{
 		MasterChannel: channelID,
+		Manager:       gm,
 		GuildID:       guildID,
 		Packs:         packs,
 		GameMaster:    userID,
 		PlayerLimit:   10,
+		Session:       gm.SessionProvider.SessionForGuild(guildID),
 	}
 
 	game.Created()
@@ -133,6 +137,34 @@ func (gm *GameManager) HandleReactionAdd(ra *discordgo.MessageReactionAdd) {
 	} else if game, ok := gm.ActiveGames[userID]; ok {
 		gm.RUnlock()
 		game.HandleRectionAdd(ra)
+	} else {
+		gm.RUnlock()
 	}
-	gm.RUnlock()
+}
+
+func (gm *GameManager) Run() {
+	ticker := time.NewTicker(time.Second)
+
+	for {
+		<-ticker.C
+
+		gm.RLock()
+		count := 0
+		tickedGames := make([]*Game, 0, len(gm.ActiveGames))
+	OUTER:
+		for _, v := range gm.ActiveGames {
+			for _, handled := range tickedGames {
+				if handled == v {
+					continue OUTER
+				}
+			}
+
+			go v.Tick()
+			tickedGames = append(tickedGames, v)
+			count++
+		}
+
+		log.Println("Ticked ", count, " games")
+		gm.RUnlock()
+	}
 }
