@@ -35,9 +35,9 @@ const (
 )
 
 const (
-	PreRoundDelayDuration = time.Second * 10
-	PickResponseDuration  = time.Second * 45
-	PickWinnerDuration    = time.Second * 60
+	PreRoundDelayDuration = time.Second * 15
+	PickResponseDuration  = time.Second * 60
+	PickWinnerDuration    = time.Second * 90
 	GameExpireAfter       = time.Second * 300
 )
 
@@ -410,6 +410,7 @@ func (g *Game) presentStartRound() {
 		}(player)
 	}
 
+	playerInstructions := fmt.Sprintf("Check your dm for your cards and make your selections there, then return here, you have %d seconds", int(PickResponseDuration.Seconds()))
 	embed := &discordgo.MessageEmbed{
 		Title: "Next round started!",
 		Color: 7001855,
@@ -425,7 +426,7 @@ func (g *Game) presentStartRound() {
 			},
 			&discordgo.MessageEmbedField{
 				Name:  "Instructions",
-				Value: "Players: Check your dm for your cards and make your selections there, then return here, you have 45 seconds\nCardCzar: Wait until all players have picked cards(s) then select the best one(s)",
+				Value: "Players: " + playerInstructions + "\nCardCzar: Wait until all players have picked cards(s) then select the best one(s)",
 			},
 		},
 	}
@@ -473,7 +474,7 @@ func (g *Game) presentPickedResponseCards() {
 
 	embed := &discordgo.MessageEmbed{
 		Title:       "Pick the winner",
-		Description: fmt.Sprintf("Cards have been picked, pick the best one(s) <@%d>!", g.CurrentCardCzar),
+		Description: fmt.Sprintf("Cards have been picked, pick the best one(s) <@%d>! you have %d seconds.", g.CurrentCardCzar, int(PickWinnerDuration.Seconds())),
 		Color:       5659830,
 		Fields: []*discordgo.MessageEmbedField{
 			&discordgo.MessageEmbedField{
@@ -579,7 +580,7 @@ func (g *Game) HandleRectionAdd(ra *discordgo.MessageReactionAdd) {
 			g.LastAction = time.Now()
 			if g.State == GameStatePreGame && g.GameMaster == ra.UserID {
 				g.setState(GameStatePreRoundDelay)
-				go g.sendAnnouncment("Starting in 10 seconds", false)
+				go g.sendAnnouncment(fmt.Sprintf("Starting in %d seconds", int(PreRoundDelayDuration.Seconds())), false)
 			}
 
 			return
@@ -646,7 +647,7 @@ func (g *Game) presentWinner(winningPick *PickedResonse) {
 	winnerCard := fmt.Sprintf(g.CurrentPropmpt.Prompt, args...)
 
 	title := fmt.Sprintf("%s Won!", winningPick.Player.Username)
-	content := fmt.Sprintf("%s\n\n**Standings:**\n%s\n\nNext round in 10 seconds...", winnerCard, standings)
+	content := fmt.Sprintf("%s\n\n**Standings:**\n%s\n\nNext round in %d seconds...", winnerCard, standings, int(PreRoundDelayDuration.Seconds()))
 	embed := &discordgo.MessageEmbed{
 		Title:       title,
 		Description: content,
