@@ -38,7 +38,7 @@ const (
 	PreRoundDelayDuration = time.Second * 10
 	PickResponseDuration  = time.Second * 45
 	PickWinnerDuration    = time.Second * 60
-	GameExpireAfter       = time.Second * 180
+	GameExpireAfter       = time.Second * 300
 )
 
 var (
@@ -103,8 +103,13 @@ type PickedResonse struct {
 func (g *Game) Created() {
 	g.LastAction = time.Now()
 
-	msg, err := g.Session.ChannelMessageSend(g.MasterChannel, fmt.Sprintf("Game is created! React with %s to join and %s to leave, the game master can start the game with %s",
-		JoinEmoji, LeaveEmoji, PlayEmoji))
+	embed := &discordgo.MessageEmbed{
+		Title:       "Game created!",
+		Description: fmt.Sprintf("React with %s to join and %s to leave, the game master can start the game with %s", JoinEmoji, LeaveEmoji, PlayEmoji),
+	}
+
+	msg, err := g.Session.ChannelMessageSendEmbed(g.MasterChannel, embed)
+
 	if err != nil {
 		return
 	}
@@ -232,22 +237,25 @@ func (g *Game) sendAnnouncment(msg string, allPlayers bool) {
 		return
 	}
 
+	embed := &discordgo.MessageEmbed{
+		Description: msg,
+	}
+
 	if allPlayers {
 		for _, v := range g.Players {
 			go func(channel int64) {
-				g.Session.ChannelMessageSend(channel, msg)
+				g.Session.ChannelMessageSendEmbed(channel, embed)
 			}(v.Channel)
 		}
 	}
 
-	g.Session.ChannelMessageSend(g.MasterChannel, msg)
+	g.Session.ChannelMessageSendEmbed(g.MasterChannel, embed)
 }
 
 func (g *Game) Tick() {
 	g.Lock()
 	defer g.Unlock()
 
-	log.Println(time.Since(g.LastAction))
 	if time.Since(g.LastAction) > GameExpireAfter || len(g.Players) < 1 {
 		g.gameExpired()
 		return
@@ -318,9 +326,6 @@ func (g *Game) startRound() {
 		v.SelectedCards = nil
 	}
 
-	// Pick next cardzar
-	g.pickNextCardzar()
-
 	lastPick := 1
 	if g.CurrentPropmpt != nil {
 		lastPick = g.CurrentPropmpt.NumPick
@@ -331,6 +336,9 @@ func (g *Game) startRound() {
 
 	// Give each player a random card (if they're below 10 cards)
 	g.giveEveryoneCards(lastPick)
+
+	// Pick next cardzar
+	g.pickNextCardzar()
 
 	// Present the board
 	g.presentStartRound()
@@ -346,7 +354,7 @@ func (g *Game) pickNextCardzar() {
 			continue
 		}
 
-		if v.ID > g.CurrentCardCzar && v.ID > next {
+		if v.ID > g.CurrentCardCzar && (v.ID < next || next == 0) {
 			next = v.ID
 		}
 	}
@@ -368,7 +376,7 @@ func (g *Game) randomPrompt() *PromptCard {
 	for _, v := range g.Packs {
 		packPrompts := Packs[v].Prompts
 		if len(packPrompts) > cardIndex {
-			return &packPrompts[cardIndex]
+			return packPrompts[cardIndex]
 		}
 
 		cardIndex -= len(packPrompts)
@@ -396,21 +404,32 @@ func (g *Game) giveEveryoneCards(num int) {
 
 func (g *Game) presentStartRound() {
 
-	cardCzarUsername := ""
 	for _, player := range g.Players {
-		if player.ID == g.CurrentCardCzar {
-			cardCzarUsername = player.Username
-		}
-
 		go func(p *Player) {
 			p.PresentBoard(g.Session, g.CurrentPropmpt, g.CurrentCardCzar)
 		}(player)
 	}
 
-	// Present the main board
-	msg := fmt.Sprintf("---------------------\nNext round started! **%s** is the Card Czar!\n\n**%s**\n\nCheck your dm for your card and pick your cards there, return here afterwards, you got 45 seconds.",
-		cardCzarUsername, strings.Replace(g.CurrentPropmpt.Prompt, "%s", "____", -1))
-	g.Session.ChannelMessageSend(g.MasterChannel, msg)
+	embed := &discordgo.MessageEmbed{
+		Title: "Next round started!",
+		Color: 7001855,
+		// Description: msg,
+		Fields: []*discordgo.MessageEmbedField{
+			&discordgo.MessageEmbedField{
+				Name:  "Prompt",
+				Value: strings.Replace(g.CurrentPropmpt.Prompt, "%s", "____", -1),
+			},
+			&discordgo.MessageEmbedField{
+				Name:  "CardCzar",
+				Value: fmt.Sprintf("<@%d>", g.CurrentCardCzar),
+			},
+			&discordgo.MessageEmbedField{
+				Name:  "Instructions",
+				Value: "Players: Check your dm for your cards and make your selections there, then return here, you have 45 seconds\nCardCzar: Wait until all players have picked cards(s) then select the best one(s)",
+			},
+		},
+	}
+	g.Session.ChannelMessageSendEmbed(g.MasterChannel, embed)
 }
 
 func (g *Game) donePickingResponses() {
@@ -437,13 +456,35 @@ func (g *Game) donePickingResponses() {
 		})
 	}
 
+	// Shuffle them
+	perm := rand.Perm(len(g.Responses))
+	newResponses := make([]*PickedResonse, len(g.Responses))
+	for i, v := range perm {
+		newResponses[i] = g.Responses[v]
+	}
+	g.Responses = newResponses
+
 	// Shows all the picks in both dm's and main channel
 	g.presentPickedResponseCards()
 	g.setState(GameStatePickingWinner)
 }
 
 func (g *Game) presentPickedResponseCards() {
-	content := fmt.Sprintf("Cards have been picked, pick the best one(s) <@%d>!\n\n**%s**:\n\n", g.CurrentCardCzar, strings.Replace(g.CurrentPropmpt.Prompt, "%s", "____", -1))
+
+	embed := &discordgo.MessageEmbed{
+		Title:       "Pick the winner",
+		Description: fmt.Sprintf("Cards have been picked, pick the best one(s) <@%d>!", g.CurrentCardCzar),
+		Color:       5659830,
+		Fields: []*discordgo.MessageEmbedField{
+			&discordgo.MessageEmbedField{
+				Name:  "Prompt",
+				Value: strings.Replace(g.CurrentPropmpt.Prompt, "%s", "____", -1),
+			},
+			&discordgo.MessageEmbedField{
+				Name: "Candidates",
+			},
+		},
+	}
 
 	for i, v := range g.Responses {
 		strCards := make([]interface{}, len(v.Selections))
@@ -451,10 +492,10 @@ func (g *Game) presentPickedResponseCards() {
 			strCards[j] = "**" + string(resp) + "**"
 		}
 
-		content += CardSelectionEmojis[i] + ": " + fmt.Sprintf(g.CurrentPropmpt.Prompt, strCards...) + "\n\n"
+		embed.Fields[1].Value += CardSelectionEmojis[i] + ": " + fmt.Sprintf(g.CurrentPropmpt.Prompt, strCards...) + "\n\n"
 	}
 
-	msg, err := g.Session.ChannelMessageSend(g.MasterChannel, content)
+	msg, err := g.Session.ChannelMessageSendEmbed(g.MasterChannel, embed)
 	if err != nil {
 		return
 	}
@@ -494,8 +535,11 @@ func (g *Game) addCommonMenuReactions(mID int64, play bool) {
 }
 
 func (g *Game) HandleRectionAdd(ra *discordgo.MessageReactionAdd) {
+	log.Println("Starting Handling RA in game: ", ra.Emoji.Name, ", ", ra.UserID)
 	g.Lock()
 	defer g.Unlock()
+
+	log.Println("Handling RA in game: ", ra.Emoji.Name, ", ", ra.UserID)
 
 	var player *Player
 	for _, v := range g.Players {
@@ -512,15 +556,19 @@ func (g *Game) HandleRectionAdd(ra *discordgo.MessageReactionAdd) {
 				return
 			}
 
-			member, err := g.Session.GuildMember(g.GuildID, ra.UserID)
-			if member.User.Bot {
-				return
-			}
+			go func() {
+				member, err := g.Session.GuildMember(g.GuildID, ra.UserID)
+				if err != nil || member.User.Bot {
+					return
+				}
 
-			if err == nil {
-				g.addPlayer(ra.UserID, member.User.Username)
-			}
-			g.LastAction = time.Now()
+				if g.Manager.PlayerTryJoinGame(g.MasterChannel, member.User.ID, member.User.Username) == nil {
+					g.Lock()
+					g.LastAction = time.Now()
+					g.Unlock()
+				}
+			}()
+
 			return
 		case LeaveEmoji:
 			g.removePlayer(ra.UserID)
@@ -573,9 +621,8 @@ func (g *Game) HandleRectionAdd(ra *discordgo.MessageReactionAdd) {
 		winner := g.Responses[emojiIndex]
 		winner.Player.Wins++
 		g.presentWinner(winner)
-		g.setState(GameStatePreGame)
+		g.setState(GameStatePreRoundDelay)
 	}
-
 }
 
 func (g *Game) presentWinner(winningPick *PickedResonse) {
@@ -586,10 +633,11 @@ func (g *Game) presentWinner(winningPick *PickedResonse) {
 		return g.Players[i].Wins > g.Players[j].Wins
 	})
 
-	standings := ""
+	standings := "```\n"
 	for _, v := range g.Players {
-		standings += fmt.Sprintf("%20s: %d\n", v.Username, v.Wins)
+		standings += fmt.Sprintf("%-20s: %d\n", v.Username, v.Wins)
 	}
+	standings += "```"
 
 	args := make([]interface{}, len(winningPick.Selections))
 	for i, v := range winningPick.Selections {
@@ -597,8 +645,16 @@ func (g *Game) presentWinner(winningPick *PickedResonse) {
 	}
 	winnerCard := fmt.Sprintf(g.CurrentPropmpt.Prompt, args...)
 
-	content := fmt.Sprintf("picked <@%d>'s card(s)!\n%s\n\n**Standings:**\n%s\n\nNext round in 10 seconds...", winningPick.Player.ID, winnerCard, standings)
-	msg, err := g.Session.ChannelMessageSend(g.MasterChannel, content)
+	title := fmt.Sprintf("%s Won!", winningPick.Player.Username)
+	content := fmt.Sprintf("%s\n\n**Standings:**\n%s\n\nNext round in 10 seconds...", winnerCard, standings)
+	embed := &discordgo.MessageEmbed{
+		Title:       title,
+		Description: content,
+		Color:       15276265,
+	}
+
+	msg, err := g.Session.ChannelMessageSendEmbed(g.MasterChannel, embed)
+	// msg, err := g.Session.ChannelMessageSend(g.MasterChannel, content)
 	if err != nil {
 		return
 	}
@@ -639,14 +695,17 @@ func (g *Game) playerPickedResponseReaction(player *Player, ra *discordgo.Messag
 	player.SelectedCards = append(player.SelectedCards, emojiIndex)
 	card := player.Cards[emojiIndex]
 
-	respMsg := fmt.Sprintf("Selected %s", card)
+	respMsg := fmt.Sprintf("Selected **%s**", card)
 	if len(player.SelectedCards) >= g.CurrentPropmpt.NumPick {
 		respMsg += fmt.Sprintf(", go to <#%d> and wait for the other players to finish their selections, the winner will be picked there", g.MasterChannel)
 	} else {
 		respMsg += fmt.Sprintf(", select %d more cards", g.CurrentPropmpt.NumPick-len(player.SelectedCards))
 	}
 
-	go g.Session.ChannelMessageSend(player.Channel, respMsg)
+	embed := &discordgo.MessageEmbed{
+		Description: respMsg,
+	}
+	go g.Session.ChannelMessageSendEmbed(player.Channel, embed)
 }
 
 type Player struct {
@@ -669,15 +728,21 @@ func (p *Player) PresentBoard(session *discordgo.Session, currentPrompt *PromptC
 		return
 	}
 
-	msg := "-----------\n**Next round:**\n" + strings.Replace(currentPrompt.Prompt, "%s", "____", -1)
-	msg += "\n\n"
-	msg += fmt.Sprintf("Pick %d cards:\n", currentPrompt.NumPick)
-
-	for i, v := range p.Cards {
-		msg += CardSelectionEmojis[i] + ": " + string(v) + "\n"
+	embed := &discordgo.MessageEmbed{
+		Title:       fmt.Sprintf("Pick %d cards!", currentPrompt.NumPick),
+		Description: strings.Replace(currentPrompt.Prompt, "%s", "____", -1),
+		Fields: []*discordgo.MessageEmbedField{
+			&discordgo.MessageEmbedField{
+				Name: "Options",
+			},
+		},
 	}
 
-	resp, err := session.ChannelMessageSend(p.Channel, msg)
+	for i, v := range p.Cards {
+		embed.Fields[0].Value += CardSelectionEmojis[i] + ": " + string(v) + "\n"
+	}
+
+	resp, err := session.ChannelMessageSendEmbed(p.Channel, embed)
 	if err != nil {
 		return
 	}

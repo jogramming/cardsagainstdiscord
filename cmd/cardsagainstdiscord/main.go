@@ -6,6 +6,8 @@ import (
 	"github.com/jonas747/discordgo"
 	"github.com/jonas747/dutil/dstate"
 	"log"
+	"net/http"
+	_ "net/http/pprof"
 	"os"
 )
 
@@ -46,6 +48,8 @@ func main() {
 	err = session.Open()
 	panicErr(err, "Failed opening gateway connection")
 	log.Println("Running...")
+
+	go http.ListenAndServe(":7447", nil)
 	select {}
 }
 

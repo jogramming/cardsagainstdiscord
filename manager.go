@@ -130,6 +130,8 @@ func (gm *GameManager) HandleReactionAdd(ra *discordgo.MessageReactionAdd) {
 	cid := ra.ChannelID
 	userID := ra.UserID
 
+	log.Println("RA: ", cid, ", ", userID)
+
 	gm.RLock()
 	if game, ok := gm.ActiveGames[cid]; ok {
 		gm.RUnlock()
@@ -164,7 +166,7 @@ func (gm *GameManager) Run() {
 			count++
 		}
 
-		log.Println("Ticked ", count, " games")
+		// log.Println("Ticked ", count, " games")
 		gm.RUnlock()
 	}
 }
