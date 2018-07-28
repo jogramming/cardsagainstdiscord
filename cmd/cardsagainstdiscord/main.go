@@ -26,7 +26,6 @@ func main() {
 	cahManager = cardsagainstdiscord.NewGameManager(&cardsagainstdiscord.StaticSessionProvider{
 		Session: session,
 	})
-	go cahManager.Run()
 
 	state := dstate.NewState()
 	state.TrackMembers = false

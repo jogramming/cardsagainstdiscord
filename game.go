@@ -78,14 +78,15 @@ type Game struct {
 	// The current cardzar
 	CurrentCardCzar int64
 
-	Packs   []string
-	Players []*Player
-
 	PlayerLimit int
+	Packs       []string
+
+	Players []*Player
 
 	State        GameState
 	StateEntered time.Time
 
+	// The time the most recent action was taken, if we go too long without a user action we expire the game
 	LastAction time.Time
 
 	CurrentPropmpt *PromptCard
@@ -93,6 +94,9 @@ type Game struct {
 	LastMenuMessage int64
 
 	Responses []*PickedResonse
+
+	stopped bool
+	stopch  chan bool
 }
 
 type PickedResonse struct {
@@ -115,6 +119,9 @@ func (g *Game) Created() {
 	}
 
 	g.LastMenuMessage = msg.ID
+
+	g.stopch = make(chan bool)
+	go g.runTicker()
 
 	go g.addCommonMenuReactions(msg.ID, true)
 }
@@ -250,6 +257,29 @@ func (g *Game) sendAnnouncment(msg string, allPlayers bool) {
 	}
 
 	g.Session.ChannelMessageSendEmbed(g.MasterChannel, embed)
+}
+
+func (g *Game) Stop() {
+	g.Lock()
+	if g.stopped {
+		g.Unlock()
+		return // Already stopped
+	}
+
+	close(g.stopch)
+	g.Unlock()
+}
+
+func (g *Game) runTicker() {
+	ticker := time.NewTicker(time.Second)
+	for {
+		select {
+		case <-g.stopch:
+			return
+		case <-ticker.C:
+			g.Tick()
+		}
+	}
 }
 
 func (g *Game) Tick() {

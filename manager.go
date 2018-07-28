@@ -5,7 +5,6 @@ import (
 	"github.com/pkg/errors"
 	"log"
 	"sync"
-	"time"
 )
 
 var (
@@ -113,6 +112,8 @@ func (gm *GameManager) RemoveGame(gameID int64) error {
 		return ErrGameNotFound
 	}
 
+	g.Stop()
+
 	// Remove all references to the game
 	g.RLock()
 	defer g.RUnlock()
@@ -140,33 +141,6 @@ func (gm *GameManager) HandleReactionAdd(ra *discordgo.MessageReactionAdd) {
 		gm.RUnlock()
 		game.HandleRectionAdd(ra)
 	} else {
-		gm.RUnlock()
-	}
-}
-
-func (gm *GameManager) Run() {
-	ticker := time.NewTicker(time.Second)
-
-	for {
-		<-ticker.C
-
-		gm.RLock()
-		count := 0
-		tickedGames := make([]*Game, 0, len(gm.ActiveGames))
-	OUTER:
-		for _, v := range gm.ActiveGames {
-			for _, handled := range tickedGames {
-				if handled == v {
-					continue OUTER
-				}
-			}
-
-			go v.Tick()
-			tickedGames = append(tickedGames, v)
-			count++
-		}
-
-		// log.Println("Ticked ", count, " games")
 		gm.RUnlock()
 	}
 }
