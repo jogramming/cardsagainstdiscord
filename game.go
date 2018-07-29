@@ -79,8 +79,10 @@ type Game struct {
 	// The current cardzar
 	CurrentCardCzar int64
 
-	PlayerLimit int
-	Packs       []string
+	PlayerLimit        int
+	Packs              []string
+	availablePrompts   []*PromptCard
+	availableResponses []ResponseCard
 
 	Players []*Player
 
@@ -122,9 +124,26 @@ func (g *Game) Created() {
 	g.LastMenuMessage = msg.ID
 
 	g.stopch = make(chan bool)
+
+	g.loadPackPrompts()
+	g.loadPackResponses()
+
 	go g.runTicker()
 
 	go g.addCommonMenuReactions(msg.ID)
+}
+
+func (g *Game) loadPackResponses() {
+	for _, v := range g.Packs {
+		pack := Packs[v]
+		g.availableResponses = append(g.availableResponses, pack.Responses...)
+	}
+}
+func (g *Game) loadPackPrompts() {
+	for _, v := range g.Packs {
+		pack := Packs[v]
+		g.availablePrompts = append(g.availablePrompts, pack.Prompts...)
+	}
 }
 
 // AddPlayer attempts to add a player to the game, if it fails (hit the limit for example) then it returns false
@@ -197,42 +216,25 @@ func (g *Game) nextRound() {
 }
 
 func (g *Game) getRandomResponseCard() ResponseCard {
-	totalAvailableCards := 0
-	for _, v := range g.Packs {
-		totalAvailableCards += len(Packs[v].Responses)
+	if len(g.availableResponses) < 1 {
+		g.loadPackResponses() // re-shuffle basically, TODO: exclude current hands
 	}
 
-	cardIndex := rand.Intn(totalAvailableCards)
-	for _, v := range g.Packs {
-		packResponses := Packs[v].Responses
-		if len(packResponses) > cardIndex {
-			return packResponses[cardIndex]
-		}
-
-		cardIndex -= len(packResponses)
-	}
-
-	panic("Should never get here")
-	return ""
+	i := rand.Intn(len(g.availableResponses))
+	card := g.availableResponses[i]
+	g.availableResponses = append(g.availableResponses[:i], g.availableResponses[i+1:]...)
+	return card
 }
 
 func (g *Game) getRandomPlayerCards(num int) []ResponseCard {
 	result := make([]ResponseCard, 0, num)
 
-	if len(g.Packs) < 1 {
+	if len(g.availableResponses) < 1 {
 		return result
 	}
 
 	for len(result) < num {
 		card := g.getRandomResponseCard()
-
-		// Duplicate
-		for _, existing := range result {
-			if existing == card {
-				continue
-			}
-		}
-
 		result = append(result, card)
 	}
 
@@ -415,23 +417,15 @@ func NextCardCzar(players []*Player, current int64) int64 {
 }
 
 func (g *Game) randomPrompt() *PromptCard {
-	totalAvailablePromps := 0
-	for _, v := range g.Packs {
-		totalAvailablePromps += len(Packs[v].Prompts)
+	if len(g.availablePrompts) < 1 {
+		g.loadPackPrompts() // ran out of cards, just relaod the packs
 	}
 
-	cardIndex := rand.Intn(totalAvailablePromps)
-	for _, v := range g.Packs {
-		packPrompts := Packs[v].Prompts
-		if len(packPrompts) > cardIndex {
-			return packPrompts[cardIndex]
-		}
+	i := rand.Intn(len(g.availablePrompts))
+	prompt := g.availablePrompts[i]
+	g.availablePrompts = append(g.availablePrompts[:i], g.availablePrompts[i+1:]...)
 
-		cardIndex -= len(packPrompts)
-	}
-
-	panic("Should never get here")
-	return nil
+	return prompt
 }
 
 func (g *Game) giveEveryoneCards(num int) {
