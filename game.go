@@ -35,10 +35,11 @@ const (
 )
 
 const (
-	PreRoundDelayDuration = time.Second * 15
-	PickResponseDuration  = time.Second * 60
-	PickWinnerDuration    = time.Second * 90
-	GameExpireAfter       = time.Second * 300
+	PreRoundDelayDuration  = time.Second * 15
+	PickResponseDuration   = time.Second * 60
+	PickWinnerDuration     = time.Second * 90
+	GameExpireAfter        = time.Second * 300
+	GameExpireAfterPregame = time.Minute * 30
 )
 
 var (
@@ -56,9 +57,9 @@ var (
 		"🇰", // K
 	}
 
-	JoinEmoji  = "➕"
-	LeaveEmoji = "➖"
-	PlayEmoji  = "▶"
+	JoinEmoji      = "➕"
+	LeaveEmoji     = "➖"
+	PlayPauseEmoji = "⏯️"
 )
 
 type Game struct {
@@ -109,7 +110,7 @@ func (g *Game) Created() {
 
 	embed := &discordgo.MessageEmbed{
 		Title:       "Game created!",
-		Description: fmt.Sprintf("React with %s to join and %s to leave, the game master can start the game with %s", JoinEmoji, LeaveEmoji, PlayEmoji),
+		Description: fmt.Sprintf("React with %s to join and %s to leave, the game master can start/stop the game with %s", JoinEmoji, LeaveEmoji, PlayPauseEmoji),
 	}
 
 	msg, err := g.Session.ChannelMessageSendEmbed(g.MasterChannel, embed)
@@ -123,7 +124,7 @@ func (g *Game) Created() {
 	g.stopch = make(chan bool)
 	go g.runTicker()
 
-	go g.addCommonMenuReactions(msg.ID, true)
+	go g.addCommonMenuReactions(msg.ID)
 }
 
 // AddPlayer attempts to add a player to the game, if it fails (hit the limit for example) then it returns false
@@ -239,11 +240,6 @@ func (g *Game) getRandomPlayerCards(num int) []ResponseCard {
 }
 
 func (g *Game) sendAnnouncment(msg string, allPlayers bool) {
-	session := g.Manager.SessionProvider.SessionForGuild(g.GuildID)
-	if session == nil {
-		return
-	}
-
 	embed := &discordgo.MessageEmbed{
 		Description: msg,
 	}
@@ -257,6 +253,18 @@ func (g *Game) sendAnnouncment(msg string, allPlayers bool) {
 	}
 
 	g.Session.ChannelMessageSendEmbed(g.MasterChannel, embed)
+}
+
+func (g *Game) sendAnnouncmentMenu(msg string) {
+	embed := &discordgo.MessageEmbed{
+		Description: msg,
+	}
+
+	m, err := g.Session.ChannelMessageSendEmbed(g.MasterChannel, embed)
+	if err == nil {
+		g.LastMenuMessage = m.ID
+		go g.addCommonMenuReactions(m.ID)
+	}
 }
 
 func (g *Game) Stop() {
@@ -286,7 +294,11 @@ func (g *Game) Tick() {
 	g.Lock()
 	defer g.Unlock()
 
-	if time.Since(g.LastAction) > GameExpireAfter || len(g.Players) < 1 {
+	expireAfter := GameExpireAfter
+	if g.State == GameStatePreGame {
+		expireAfter = GameExpireAfterPregame
+	}
+	if time.Since(g.LastAction) > expireAfter || len(g.Players) < 1 {
 		g.gameExpired()
 		return
 	}
@@ -465,7 +477,11 @@ func (g *Game) presentStartRound() {
 			},
 		},
 	}
-	g.Session.ChannelMessageSendEmbed(g.MasterChannel, embed)
+	m, err := g.Session.ChannelMessageSendEmbed(g.MasterChannel, embed)
+	if err == nil {
+		g.LastMenuMessage = m.ID
+		go g.addCommonMenuReactions(m.ID)
+	}
 }
 
 func (g *Game) donePickingResponses() {
@@ -542,7 +558,7 @@ func (g *Game) presentPickedResponseCards() {
 			g.Session.MessageReactionAdd(g.MasterChannel, msg.ID, CardSelectionEmojis[i])
 		}
 
-		g.addCommonMenuReactions(msg.ID, false)
+		g.addCommonMenuReactions(msg.ID)
 	}()
 
 	g.LastMenuMessage = msg.ID
@@ -551,23 +567,21 @@ func (g *Game) presentPickedResponseCards() {
 func (g *Game) cardzarExpired() {
 	msg, err := g.Session.ChannelMessageSend(g.MasterChannel, fmt.Sprintf("<%d> didn't pick a winner in %d seconds, skipping round...", g.CurrentCardCzar, int(PickWinnerDuration.Seconds())))
 	if err == nil {
-		go g.addCommonMenuReactions(msg.ID, false)
+		go g.addCommonMenuReactions(msg.ID)
 	}
 
 	g.setState(GameStatePreRoundDelay)
 }
 
 func (g *Game) gameExpired() {
-	g.Session.ChannelMessageSend(g.MasterChannel, "CAH Game expired")
+	g.Session.ChannelMessageSend(g.MasterChannel, "CAH Game expired, too long without any actions or no players.")
 	go g.Manager.RemoveGame(g.MasterChannel)
 }
 
-func (g *Game) addCommonMenuReactions(mID int64, play bool) {
+func (g *Game) addCommonMenuReactions(mID int64) {
 	g.Session.MessageReactionAdd(g.MasterChannel, mID, JoinEmoji)
 	g.Session.MessageReactionAdd(g.MasterChannel, mID, LeaveEmoji)
-	if play {
-		g.Session.MessageReactionAdd(g.MasterChannel, mID, PlayEmoji)
-	}
+	g.Session.MessageReactionAdd(g.MasterChannel, mID, PlayPauseEmoji)
 }
 
 func (g *Game) HandleRectionAdd(ra *discordgo.MessageReactionAdd) {
@@ -610,12 +624,21 @@ func (g *Game) HandleRectionAdd(ra *discordgo.MessageReactionAdd) {
 			g.removePlayer(ra.UserID)
 			g.LastAction = time.Now()
 			return
-		case PlayEmoji:
-			log.Println("Pressed play")
+		case PlayPauseEmoji:
+			log.Println("Pressed play/pause")
 			g.LastAction = time.Now()
 			if g.State == GameStatePreGame && g.GameMaster == ra.UserID {
 				g.setState(GameStatePreRoundDelay)
 				go g.sendAnnouncment(fmt.Sprintf("Starting in %d seconds", int(PreRoundDelayDuration.Seconds())), false)
+			} else if g.GameMaster == ra.UserID {
+				for _, v := range g.Players {
+					v.SelectedCards = nil
+				}
+
+				g.Responses = nil
+				g.setState(GameStatePreGame)
+
+				go g.sendAnnouncmentMenu(fmt.Sprintf("Paused, react with %s to continue, the game can be paused for max 30 minutes before it expires.", PlayPauseEmoji))
 			}
 
 			return
@@ -658,6 +681,7 @@ func (g *Game) HandleRectionAdd(ra *discordgo.MessageReactionAdd) {
 		winner.Player.Wins++
 		g.presentWinner(winner)
 		g.setState(GameStatePreRoundDelay)
+		g.LastAction = time.Now()
 	}
 }
 
@@ -695,7 +719,7 @@ func (g *Game) presentWinner(winningPick *PickedResonse) {
 		return
 	}
 
-	g.addCommonMenuReactions(msg.ID, false)
+	g.addCommonMenuReactions(msg.ID)
 }
 
 func (g *Game) playerPickedResponseReaction(player *Player, ra *discordgo.MessageReactionAdd) {
