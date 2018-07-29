@@ -344,8 +344,9 @@ func (g *Game) Tick() {
 }
 
 func (g *Game) startRound() {
-	if len(g.Players) < 1 {
+	if len(g.Players) < 2 {
 		g.setState(GameStatePreGame)
+		g.sendAnnouncment("Not enough players...", false)
 		return
 	}
 
