@@ -6,7 +6,6 @@ import (
 	"log"
 	"math/rand"
 	"sort"
-	"strings"
 	"sync"
 	"time"
 )
@@ -460,7 +459,7 @@ func (g *Game) presentStartRound() {
 		Fields: []*discordgo.MessageEmbedField{
 			&discordgo.MessageEmbedField{
 				Name:  "Prompt",
-				Value: strings.Replace(g.CurrentPropmpt.Prompt, "%s", "____", -1),
+				Value: g.CurrentPropmpt.PlaceHolder(),
 			},
 			&discordgo.MessageEmbedField{
 				Name:  "CardCzar",
@@ -525,7 +524,7 @@ func (g *Game) presentPickedResponseCards() {
 		Fields: []*discordgo.MessageEmbedField{
 			&discordgo.MessageEmbedField{
 				Name:  "Prompt",
-				Value: strings.Replace(g.CurrentPropmpt.Prompt, "%s", "____", -1),
+				Value: g.CurrentPropmpt.PlaceHolder(),
 			},
 			&discordgo.MessageEmbedField{
 				Name: "Candidates",
@@ -534,12 +533,9 @@ func (g *Game) presentPickedResponseCards() {
 	}
 
 	for i, v := range g.Responses {
-		strCards := make([]interface{}, len(v.Selections))
-		for j, resp := range v.Selections {
-			strCards[j] = "**" + string(resp) + "**"
-		}
+		filledPrompt := g.CurrentPropmpt.WithCards(v.Selections)
 
-		embed.Fields[1].Value += CardSelectionEmojis[i] + ": " + fmt.Sprintf(g.CurrentPropmpt.Prompt, strCards...) + "\n\n"
+		embed.Fields[1].Value += CardSelectionEmojis[i] + ": " + filledPrompt + "\n\n"
 	}
 
 	msg, err := g.Session.ChannelMessageSendEmbed(g.MasterChannel, embed)
@@ -694,11 +690,7 @@ func (g *Game) presentWinner(winningPick *PickedResonse) {
 	}
 	standings += "```"
 
-	args := make([]interface{}, len(winningPick.Selections))
-	for i, v := range winningPick.Selections {
-		args[i] = "**" + v + "**"
-	}
-	winnerCard := fmt.Sprintf(g.CurrentPropmpt.Prompt, args...)
+	winnerCard := g.CurrentPropmpt.WithCards(winningPick.Selections)
 
 	title := fmt.Sprintf("%s Won!", winningPick.Player.Username)
 	content := fmt.Sprintf("%s\n\n**Standings:**\n%s\n\nNext round in %d seconds...", winnerCard, standings, int(PreRoundDelayDuration.Seconds()))
@@ -785,7 +777,7 @@ func (p *Player) PresentBoard(session *discordgo.Session, currentPrompt *PromptC
 
 	embed := &discordgo.MessageEmbed{
 		Title:       fmt.Sprintf("Pick %d cards!", currentPrompt.NumPick),
-		Description: strings.Replace(currentPrompt.Prompt, "%s", "____", -1),
+		Description: currentPrompt.PlaceHolder(),
 		Fields: []*discordgo.MessageEmbedField{
 			&discordgo.MessageEmbedField{
 				Name: "Options",

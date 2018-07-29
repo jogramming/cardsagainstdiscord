@@ -1,6 +1,7 @@
 package cardsagainstdiscord
 
 import (
+	"fmt"
 	"github.com/jonas747/discordgo"
 	"strings"
 )
@@ -31,6 +32,37 @@ type CardPack struct {
 type PromptCard struct {
 	Prompt  string
 	NumPick int
+}
+
+var (
+	EscaperReplacer = strings.NewReplacer("**", "\\*\\*", "__", "\\_\\_")
+)
+
+func (p *PromptCard) PlaceHolder() string {
+	s := strings.Replace(p.Prompt, "%s", "_____", -1)
+	s = strings.Replace(p.Prompt, "%%", `%`, -1)
+
+	s = EscaperReplacer.Replace(s)
+
+	return s
+}
+
+func (p *PromptCard) WithCards(cards interface{}) string {
+	args := make([]interface{}, p.NumPick)
+	switch t := cards.(type) {
+	case []string:
+		for i, v := range t {
+			args[i] = v
+		}
+	case []ResponseCard:
+		for i, v := range t {
+			args[i] = v
+		}
+	}
+
+	s := fmt.Sprintf(p.Prompt, args...)
+	s = EscaperReplacer.Replace(s)
+	return s
 }
 
 type ResponseCard string
