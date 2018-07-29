@@ -48,6 +48,7 @@ func main() {
 	panicErr(err, "Failed opening gateway connection")
 	log.Println("Running...")
 
+	// We import http/pprof above to be ale to inspect shizz and do profiling
 	go http.ListenAndServe(":7447", nil)
 	select {}
 }

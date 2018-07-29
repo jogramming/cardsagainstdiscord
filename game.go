@@ -368,7 +368,7 @@ func (g *Game) startRound() {
 	g.giveEveryoneCards(lastPick)
 
 	// Pick next cardzar
-	g.pickNextCardzar()
+	g.CurrentCardCzar = NextCardCzar(g.Players, g.CurrentCardCzar)
 
 	// Present the board
 	g.presentStartRound()
@@ -377,23 +377,28 @@ func (g *Game) startRound() {
 
 }
 
-func (g *Game) pickNextCardzar() {
+func NextCardCzar(players []*Player, current int64) int64 {
 	var next int64
-	for _, v := range g.Players {
-		if v.ID == g.CurrentCardCzar || !v.Playing {
+	var lowest int64
+	for _, v := range players {
+		if v.ID == current || !v.Playing {
 			continue
 		}
 
-		if v.ID > g.CurrentCardCzar && (v.ID < next || next == 0) {
+		if v.ID > current && (v.ID < next || next == 0) {
 			next = v.ID
+		}
+
+		if lowest == 0 || v.ID < lowest {
+			lowest = v.ID
 		}
 	}
 
 	if next == 0 {
-		next = g.Players[0].ID
+		next = lowest
 	}
 
-	g.CurrentCardCzar = next
+	return next
 }
 
 func (g *Game) randomPrompt() *PromptCard {
