@@ -35,12 +35,12 @@ type PromptCard struct {
 }
 
 var (
-	EscaperReplacer = strings.NewReplacer("**", "\\*\\*", "__", "\\_\\_")
+	EscaperReplacer = strings.NewReplacer("*", "\\*", "_", "\\_")
 )
 
 func (p *PromptCard) PlaceHolder() string {
 	s := strings.Replace(p.Prompt, "%s", "_____", -1)
-	s = strings.Replace(p.Prompt, "%%", `%`, -1)
+	s = strings.Replace(s, "%%", `%`, -1)
 
 	s = EscaperReplacer.Replace(s)
 
@@ -52,16 +52,16 @@ func (p *PromptCard) WithCards(cards interface{}) string {
 	switch t := cards.(type) {
 	case []string:
 		for i, v := range t {
-			args[i] = v
+			args[i] = "**" + v + "**"
 		}
 	case []ResponseCard:
 		for i, v := range t {
-			args[i] = v
+			args[i] = "**" + v + "**"
 		}
 	}
 
 	s := fmt.Sprintf(p.Prompt, args...)
-	s = EscaperReplacer.Replace(s)
+	// s = EscaperReplacer.Replace(s)
 	return s
 }
 

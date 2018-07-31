@@ -58,7 +58,7 @@ var (
 
 	JoinEmoji      = "➕"
 	LeaveEmoji     = "➖"
-	PlayPauseEmoji = "⏯️"
+	PlayPauseEmoji = "⏯"
 )
 
 type Game struct {
@@ -576,7 +576,6 @@ func (g *Game) addCommonMenuReactions(mID int64) {
 }
 
 func (g *Game) HandleRectionAdd(ra *discordgo.MessageReactionAdd) {
-	log.Println("Starting Handling RA in game: ", ra.Emoji.Name, ", ", ra.UserID)
 	g.Lock()
 	defer g.Unlock()
 
@@ -603,16 +602,18 @@ func (g *Game) HandleRectionAdd(ra *discordgo.MessageReactionAdd) {
 					return
 				}
 
-				if g.Manager.PlayerTryJoinGame(g.MasterChannel, member.User.ID, member.User.Username) == nil {
+				if err = g.Manager.PlayerTryJoinGame(g.MasterChannel, member.User.ID, member.User.Username); err == nil {
 					g.Lock()
 					g.LastAction = time.Now()
 					g.Unlock()
+				} else {
+					log.Println("Failed adding", ra.UserID, "to", g.MasterChannel, ":", err.Error())
 				}
 			}()
 
 			return
 		case LeaveEmoji:
-			g.removePlayer(ra.UserID)
+			go g.Manager.PlayerTryLeaveGame(ra.UserID)
 			g.LastAction = time.Now()
 			return
 		case PlayPauseEmoji:
