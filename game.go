@@ -158,27 +158,66 @@ func (g *Game) AddPlayer(id int64, username string) bool {
 }
 
 func (g *Game) addPlayer(id int64, username string) bool {
-	if g.PlayerLimit <= len(g.Players) {
+	// 500 is max capacity
+	if 500 <= len(g.Players) {
 		return false
 	}
+
+	numPlaying := 0
+	for _, v := range g.Players {
+		if v.InGame {
+			numPlaying++
+		}
+	}
+
+	if numPlaying >= g.PlayerLimit {
+		return false
+	}
+
+	msg := ""
 
 	// Create a userchannel and cache it for use later
-	channel, err := g.Session.UserChannelCreate(id)
-	if err != nil {
-		return false
+	existing := g.findPlayer(id)
+	if existing != nil {
+
+		if existing.Banned {
+			return false
+		}
+
+		existing.InGame = true
+		msg = "Came back!"
+	} else {
+
+		channel, err := g.Session.UserChannelCreate(id)
+		if err != nil {
+			return false
+		}
+
+		p := &Player{
+			ID:       id,
+			Username: username,
+			Channel:  channel.ID,
+			Cards:    g.getRandomPlayerCards(8),
+			InGame:   true,
+		}
+
+		g.Players = append(g.Players, p)
+
+		msg = "Joined the game!"
 	}
 
-	p := &Player{
-		ID:       id,
-		Username: username,
-		Channel:  channel.ID,
-		Cards:    g.getRandomPlayerCards(8),
-	}
-
-	g.Players = append(g.Players, p)
-
-	go g.sendAnnouncment(fmt.Sprintf("<@%d> Joined the game! (%d/%d)", id, len(g.Players), g.PlayerLimit), false)
+	go g.sendAnnouncment(fmt.Sprintf("<@%d> %s! (%d/%d)", id, msg, numPlaying+1, g.PlayerLimit), false)
 	return true
+}
+
+func (g *Game) findPlayer(id int64) *Player {
+	for _, v := range g.Players {
+		if v.ID == id {
+			return v
+		}
+	}
+
+	return nil
 }
 
 func (g *Game) RemovePlayer(id int64) {
@@ -189,11 +228,27 @@ func (g *Game) RemovePlayer(id int64) {
 
 func (g *Game) removePlayer(id int64) {
 	found := false
+	numPlaying := 0
 	for i, v := range g.Players {
 		if v.ID == id {
-			g.Players = append(g.Players[:i], g.Players[i+1:]...)
+			if !v.InGame {
+				return
+			}
+
+			// Don't remember more than 200 players, if this limit is reached its more than likely abuse
+			if len(g.Players) > 200 {
+				// Above limit, remove them entirely
+				g.Players = append(g.Players[:i], g.Players[i+1:]...)
+			} else {
+				// Just mark them as not in game
+				v.InGame = false
+			}
 			found = true
-			break
+			continue
+		}
+
+		if v.InGame {
+			numPlaying++
 		}
 	}
 
@@ -201,10 +256,20 @@ func (g *Game) removePlayer(id int64) {
 		return
 	}
 
-	go g.sendAnnouncment(fmt.Sprintf("<@%d> Left the game (%d/%d)", id, len(g.Players), g.PlayerLimit), false)
+	go g.sendAnnouncment(fmt.Sprintf("<@%d> Left the game (%d/%d)", id, numPlaying, g.PlayerLimit), false)
 
 	if g.CurrentCardCzar == id && g.State != GameStatePreGame && g.State != GameStatePreRoundDelay {
 		g.nextRound()
+	}
+
+	if g.GameMaster == id && numPlaying > 0 {
+		for _, v := range g.Players {
+			if v.InGame {
+				g.GameMaster = v.ID
+				go g.sendAnnouncment(fmt.Sprintf("GameMaster left, assigned <@%d> as new game master.", v.ID), false)
+				break
+			}
+		}
 	}
 }
 
@@ -308,7 +373,7 @@ func (g *Game) Tick() {
 	if g.State == GameStatePreGame {
 		expireAfter = GameExpireAfterPregame
 	}
-	if time.Since(g.LastAction) > expireAfter || len(g.Players) < 1 {
+	if time.Since(g.LastAction) > expireAfter || g.numUsersInGame() < 1 {
 		g.gameExpired()
 		return
 	}
@@ -325,7 +390,7 @@ func (g *Game) Tick() {
 		allPlayersDone := true
 		oneResponsePicked := false
 		for _, v := range g.Players {
-			if v.ID == g.CurrentCardCzar || !v.Playing {
+			if v.ID == g.CurrentCardCzar || !v.PlayingThisRound() {
 				continue
 			}
 
@@ -353,8 +418,19 @@ func (g *Game) Tick() {
 
 }
 
+func (g *Game) numUsersInGame() int {
+	num := 0
+	for _, v := range g.Players {
+		if v.InGame {
+			num++
+		}
+	}
+
+	return num
+}
+
 func (g *Game) startRound() {
-	if len(g.Players) < 2 {
+	if g.numUsersInGame() < 2 {
 		g.setState(GameStatePreGame)
 		g.sendAnnouncment("Not enough players...", false)
 		return
@@ -404,7 +480,7 @@ func NextCardCzar(players []*Player, current int64) int64 {
 	var next int64
 	var lowest int64
 	for _, v := range players {
-		if v.ID == current || !v.Playing {
+		if v.ID == current || !v.PlayingThisRound() {
 			continue
 		}
 
@@ -438,7 +514,7 @@ func (g *Game) randomPrompt() *PromptCard {
 
 func (g *Game) giveEveryoneCards(num int) {
 	for _, p := range g.Players {
-		if p.ID == g.CurrentCardCzar || !p.Playing || len(p.Cards) >= 10 {
+		if p.ID == g.CurrentCardCzar || !p.PlayingThisRound() || len(p.Cards) >= 10 {
 			continue
 		}
 
@@ -490,7 +566,7 @@ func (g *Game) presentStartRound() {
 func (g *Game) donePickingResponses() {
 	// Send a message to players that missed the round
 	for _, v := range g.Players {
-		if !v.Playing || v.ID == g.CurrentCardCzar {
+		if !v.PlayingThisRound() || v.ID == g.CurrentCardCzar {
 			continue
 		}
 
@@ -590,28 +666,30 @@ func (g *Game) HandleRectionAdd(ra *discordgo.MessageReactionAdd) {
 
 	log.Println("Handling RA in game: ", ra.Emoji.Name, ", ", ra.UserID)
 
-	var player *Player
-	for _, v := range g.Players {
-		if v.ID == ra.UserID {
-			player = v
-			break
-		}
-	}
+	player := g.findPlayer(ra.UserID)
 
 	if ra.MessageID == g.LastMenuMessage {
 		switch ra.Emoji.Name {
 		case JoinEmoji:
-			if player != nil {
+			if player != nil && player.InGame {
 				return
 			}
 
 			go func() {
-				member, err := g.Session.GuildMember(g.GuildID, ra.UserID)
-				if err != nil || member.User.Bot {
-					return
+				username := ""
+
+				if player == nil {
+					member, err := g.Session.GuildMember(g.GuildID, ra.UserID)
+					if err != nil || member.User.Bot {
+						return
+					}
+
+					username = member.User.Username
+				} else {
+					username = player.Username
 				}
 
-				if err = g.Manager.PlayerTryJoinGame(g.MasterChannel, member.User.ID, member.User.Username); err == nil {
+				if err := g.Manager.PlayerTryJoinGame(g.MasterChannel, ra.UserID, username); err == nil {
 					g.Lock()
 					g.LastAction = time.Now()
 					g.Unlock()
@@ -765,6 +843,7 @@ func (g *Game) presentWinner(winningPick *PickedResonse) {
 		return
 	}
 
+	g.LastMenuMessage = msg.ID
 	g.addCommonMenuReactions(msg.ID)
 }
 
@@ -838,8 +917,14 @@ type Player struct {
 
 	// Wether this user is playing this round, if the user joined in the middle of a round this will be false
 	Playing bool
+	InGame  bool
+	Banned  bool
 
 	LastReactionMenu int64
+}
+
+func (p *Player) PlayingThisRound() bool {
+	return p.Playing && p.InGame
 }
 
 func (p *Player) MadeSelections(currentPrompt *PromptCard) bool {
