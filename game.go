@@ -32,6 +32,7 @@ const (
 	GameStatePreRoundDelay    GameState = 1 // Countdown before a roundn starts
 	GameStatePickingResponses GameState = 2 // Players are picking responses for the prompt card
 	GameStatePickingWinner    GameState = 3 // Cardzar is picking the winning response
+	GameStateEnded            GameState = 4 // Game is over, someone won
 )
 
 const (
@@ -83,6 +84,7 @@ type Game struct {
 	CurrentCardCzar int64
 
 	PlayerLimit        int
+	WinLimit           int
 	Packs              []string
 	availablePrompts   []*PromptCard
 	availableResponses []ResponseCard
@@ -664,6 +666,10 @@ func (g *Game) HandleRectionAdd(ra *discordgo.MessageReactionAdd) {
 	g.Lock()
 	defer g.Unlock()
 
+	if g.State == GameStateEnded {
+		return
+	}
+
 	log.Println("Handling RA in game: ", ra.Emoji.Name, ", ", ra.UserID)
 
 	player := g.findPlayer(ra.UserID)
@@ -759,8 +765,14 @@ func (g *Game) HandleRectionAdd(ra *discordgo.MessageReactionAdd) {
 		winner := g.Responses[emojiIndex]
 		winner.Player.Wins++
 		g.presentWinner(winner)
-		g.setState(GameStatePreRoundDelay)
-		g.LastAction = time.Now()
+
+		if g.Players[0].Wins >= g.WinLimit {
+			go g.Manager.RemoveGame(g.MasterChannel)
+			g.setState(GameStateEnded)
+		} else {
+			g.setState(GameStatePreRoundDelay)
+			g.LastAction = time.Now()
+		}
 	}
 }
 
@@ -821,6 +833,11 @@ func (g *Game) presentWinner(winningPick *PickedResonse) {
 		return g.Players[i].Wins > g.Players[j].Wins
 	})
 
+	wonFullGame := false
+	if g.Players[0].Wins >= g.WinLimit {
+		wonFullGame = true
+	}
+
 	standings := "```\n"
 	for _, v := range g.Players {
 		standings += fmt.Sprintf("%-20s: %d\n", v.Username, v.Wins)
@@ -829,8 +846,21 @@ func (g *Game) presentWinner(winningPick *PickedResonse) {
 
 	winnerCard := g.CurrentPropmpt.WithCards(winningPick.Selections)
 
-	title := fmt.Sprintf("%s Won!", winningPick.Player.Username)
-	content := fmt.Sprintf("%s\n\n**Standings:**\n%s\n\nNext round in %d seconds...", winnerCard, standings, int(PreRoundDelayDuration.Seconds()))
+	title := ""
+	if !wonFullGame {
+		title = fmt.Sprintf("%s Won the round!", winningPick.Player.Username)
+	} else {
+		title = fmt.Sprintf("%s WON THE ENTIRE GAME!!!", winningPick.Player.Username)
+	}
+
+	extraContent := ""
+	if wonFullGame {
+		extraContent = fmt.Sprintf("**ALL PRAISE <@%d> OUR LORD AND SAVIOUR!**", winningPick.Player.ID)
+	} else {
+		extraContent = fmt.Sprintf("Next round in %d seconds...", int(PreRoundDelayDuration.Seconds()))
+	}
+
+	content := fmt.Sprintf("%s\n\n**Standings:**\n%s\n\n%s", winnerCard, standings, extraContent)
 	embed := &discordgo.MessageEmbed{
 		Title:       title,
 		Description: content,
@@ -843,8 +873,10 @@ func (g *Game) presentWinner(winningPick *PickedResonse) {
 		return
 	}
 
-	g.LastMenuMessage = msg.ID
-	g.addCommonMenuReactions(msg.ID)
+	if !wonFullGame {
+		g.LastMenuMessage = msg.ID
+		g.addCommonMenuReactions(msg.ID)
+	}
 }
 
 func (g *Game) playerPickedResponseReaction(player *Player, ra *discordgo.MessageReactionAdd) {
