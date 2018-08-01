@@ -144,3 +144,18 @@ func (gm *GameManager) HandleReactionAdd(ra *discordgo.MessageReactionAdd) {
 		gm.RUnlock()
 	}
 }
+
+func (gm *GameManager) HandleMessageCreate(msgCreate *discordgo.MessageCreate) {
+	cid := msgCreate.ChannelID
+	userID := msgCreate.Author.ID
+
+	log.Println("MSG: ", cid, ", ", userID)
+
+	gm.RLock()
+	if game, ok := gm.ActiveGames[userID]; ok {
+		gm.RUnlock()
+		game.HandleMessageCreate(msgCreate)
+	} else {
+		gm.RUnlock()
+	}
+}

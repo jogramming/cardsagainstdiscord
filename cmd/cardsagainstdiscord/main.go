@@ -44,6 +44,10 @@ func main() {
 		go cahManager.HandleReactionAdd(ra)
 	})
 
+	session.AddHandler(func(s *discordgo.Session, msg *discordgo.MessageCreate) {
+		go cahManager.HandleMessageCreate(msg)
+	})
+
 	err = session.Open()
 	panicErr(err, "Failed opening gateway connection")
 	log.Println("Running...")

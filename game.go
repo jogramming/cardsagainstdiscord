@@ -6,6 +6,7 @@ import (
 	"log"
 	"math/rand"
 	"sort"
+	"strings"
 	"sync"
 	"time"
 )
@@ -39,6 +40,9 @@ const (
 	PickWinnerDuration     = time.Second * 90
 	GameExpireAfter        = time.Second * 300
 	GameExpireAfterPregame = time.Minute * 30
+
+	BlankCardChance              = 0.01
+	BlankCard       ResponseCard = "(write your own response)"
 )
 
 var (
@@ -215,6 +219,11 @@ func (g *Game) nextRound() {
 }
 
 func (g *Game) getRandomResponseCard() ResponseCard {
+	f := rand.Float64()
+	if f < BlankCardChance {
+		return BlankCard
+	}
+
 	if len(g.availableResponses) < 1 {
 		g.loadPackResponses() // re-shuffle basically, TODO: exclude current hands
 	}
@@ -320,7 +329,7 @@ func (g *Game) Tick() {
 				continue
 			}
 
-			if len(v.SelectedCards) < g.CurrentPropmpt.NumPick {
+			if !v.MadeSelections(g.CurrentPropmpt) {
 				allPlayersDone = false
 			} else {
 				oneResponsePicked = true
@@ -677,6 +686,55 @@ func (g *Game) HandleRectionAdd(ra *discordgo.MessageReactionAdd) {
 	}
 }
 
+func (g *Game) HandleMessageCreate(msg *discordgo.MessageCreate) {
+	g.Lock()
+	defer g.Unlock()
+
+	var player *Player
+	for _, v := range g.Players {
+		if v.ID == msg.Author.ID {
+			player = v
+			break
+		}
+	}
+
+	if player == nil || !player.FilingBlankCard {
+		return
+	}
+
+	for _, v := range player.SelectedCards {
+		card := player.Cards[v]
+		if card == BlankCard {
+			player.Cards[v] = ResponseCard(FilterEveryoneMentions(msg.ContentWithMentionsReplaced()))
+
+			msg := "Selected **" + msg.ContentWithMentionsReplaced() + "**, "
+			if len(player.SelectedCards) < g.CurrentPropmpt.NumPick {
+				msg += fmt.Sprintf("select %d more card(s)", g.CurrentPropmpt.NumPick-len(player.SelectedCards))
+			} else {
+				msg += fmt.Sprintf("go to <#%d> and wait for the other players to finish their selections, the winner will be picked there", g.MasterChannel)
+			}
+
+			go g.Session.ChannelMessageSendEmbed(player.Channel, &discordgo.MessageEmbed{
+				Description: msg,
+			})
+			break
+		}
+	}
+
+	player.FilingBlankCard = false
+}
+
+const zeroWidthSpace = "​"
+
+var (
+	mentionReplacer = strings.NewReplacer("@here", "@"+zeroWidthSpace+"here", "@everyone", "@"+zeroWidthSpace+"everyone")
+)
+
+func FilterEveryoneMentions(s string) string {
+	s = mentionReplacer.Replace(s)
+	return s
+}
+
 func (g *Game) presentWinner(winningPick *PickedResonse) {
 
 	// Sort the players by the number of wins
@@ -740,14 +798,26 @@ func (g *Game) playerPickedResponseReaction(player *Player, ra *discordgo.Messag
 		}
 	}
 
-	player.SelectedCards = append(player.SelectedCards, emojiIndex)
 	card := player.Cards[emojiIndex]
-
-	respMsg := fmt.Sprintf("Selected **%s**", card)
-	if len(player.SelectedCards) >= g.CurrentPropmpt.NumPick {
-		respMsg += fmt.Sprintf(", go to <#%d> and wait for the other players to finish their selections, the winner will be picked there", g.MasterChannel)
+	respMsg := ""
+	if card == BlankCard && player.FilingBlankCard {
+		// Picked a blank card while already filing another blank card
+		respMsg = "You're already filling in another blank card"
 	} else {
-		respMsg += fmt.Sprintf(", select %d more cards", g.CurrentPropmpt.NumPick-len(player.SelectedCards))
+		// Otherwise proceed normally
+		player.SelectedCards = append(player.SelectedCards, emojiIndex)
+
+		if card == BlankCard {
+			respMsg += "Selected a blank card, type in your own response here now"
+			player.FilingBlankCard = true
+		} else {
+			respMsg = fmt.Sprintf("Selected **%s**", card)
+			if len(player.SelectedCards) >= g.CurrentPropmpt.NumPick {
+				respMsg += fmt.Sprintf(", go to <#%d> and wait for the other players to finish their selections, the winner will be picked there", g.MasterChannel)
+			} else {
+				respMsg += fmt.Sprintf(", select %d more cards", g.CurrentPropmpt.NumPick-len(player.SelectedCards))
+			}
+		}
 	}
 
 	embed := &discordgo.MessageEmbed{
@@ -757,11 +827,12 @@ func (g *Game) playerPickedResponseReaction(player *Player, ra *discordgo.Messag
 }
 
 type Player struct {
-	ID            int64
-	Username      string
-	Cards         []ResponseCard
-	SelectedCards []int
-	Wins          int
+	ID              int64
+	Username        string
+	Cards           []ResponseCard
+	SelectedCards   []int
+	Wins            int
+	FilingBlankCard bool
 
 	Channel int64
 
@@ -771,13 +842,25 @@ type Player struct {
 	LastReactionMenu int64
 }
 
+func (p *Player) MadeSelections(currentPrompt *PromptCard) bool {
+	if len(p.SelectedCards) < currentPrompt.NumPick {
+		return false
+	}
+
+	if p.FilingBlankCard {
+		return false
+	}
+
+	return true
+}
+
 func (p *Player) PresentBoard(session *discordgo.Session, currentPrompt *PromptCard, currentCardCzar int64) {
 	if currentCardCzar == p.ID {
 		return
 	}
 
 	embed := &discordgo.MessageEmbed{
-		Title:       fmt.Sprintf("Pick %d cards!", currentPrompt.NumPick),
+		Title:       fmt.Sprintf("Pick %d card(s)!", currentPrompt.NumPick),
 		Description: currentPrompt.PlaceHolder(),
 		Fields: []*discordgo.MessageEmbedField{
 			&discordgo.MessageEmbedField{
