@@ -3,7 +3,6 @@ package cardsagainstdiscord
 import (
 	"fmt"
 	"github.com/jonas747/discordgo"
-	"log"
 	"math/rand"
 	"sort"
 	"strings"
@@ -278,7 +277,6 @@ func (g *Game) removePlayer(id int64) {
 func (g *Game) setState(state GameState) {
 	g.State = state
 	g.StateEntered = time.Now()
-	log.Println("Set ", g.MasterChannel, " state to ", state)
 }
 
 func (g *Game) nextRound() {
@@ -670,8 +668,6 @@ func (g *Game) HandleRectionAdd(ra *discordgo.MessageReactionAdd) {
 		return
 	}
 
-	log.Println("Handling RA in game: ", ra.Emoji.Name, ", ", ra.UserID)
-
 	player := g.findPlayer(ra.UserID)
 
 	if ra.MessageID == g.LastMenuMessage {
@@ -699,8 +695,6 @@ func (g *Game) HandleRectionAdd(ra *discordgo.MessageReactionAdd) {
 					g.Lock()
 					g.LastAction = time.Now()
 					g.Unlock()
-				} else {
-					log.Println("Failed adding", ra.UserID, "to", g.MasterChannel, ":", err.Error())
 				}
 			}()
 
@@ -710,7 +704,6 @@ func (g *Game) HandleRectionAdd(ra *discordgo.MessageReactionAdd) {
 			g.LastAction = time.Now()
 			return
 		case PlayPauseEmoji:
-			log.Println("Pressed play/pause")
 			g.LastAction = time.Now()
 			if g.State == GameStatePreGame && g.GameMaster == ra.UserID {
 				g.setState(GameStatePreRoundDelay)
@@ -728,7 +721,6 @@ func (g *Game) HandleRectionAdd(ra *discordgo.MessageReactionAdd) {
 
 			return
 		default:
-			log.Println("Unknown: ", ra.Emoji.Name)
 		}
 
 	}

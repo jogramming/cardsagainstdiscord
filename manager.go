@@ -3,7 +3,6 @@ package cardsagainstdiscord
 import (
 	"github.com/jonas747/discordgo"
 	"github.com/pkg/errors"
-	"log"
 	"sync"
 )
 
@@ -132,8 +131,6 @@ func (gm *GameManager) HandleReactionAdd(ra *discordgo.MessageReactionAdd) {
 	cid := ra.ChannelID
 	userID := ra.UserID
 
-	log.Println("RA: ", cid, ", ", userID)
-
 	gm.RLock()
 	if game, ok := gm.ActiveGames[cid]; ok {
 		gm.RUnlock()
@@ -147,10 +144,7 @@ func (gm *GameManager) HandleReactionAdd(ra *discordgo.MessageReactionAdd) {
 }
 
 func (gm *GameManager) HandleMessageCreate(msgCreate *discordgo.MessageCreate) {
-	cid := msgCreate.ChannelID
 	userID := msgCreate.Author.ID
-
-	log.Println("MSG: ", cid, ", ", userID)
 
 	gm.RLock()
 	if game, ok := gm.ActiveGames[userID]; ok {
