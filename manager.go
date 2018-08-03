@@ -17,6 +17,7 @@ type GameManager struct {
 	sync.RWMutex
 	SessionProvider SessionProvider
 	ActiveGames     map[int64]*Game
+	NumActiveGames  int
 }
 
 func NewGameManager(sessionProvider SessionProvider) *GameManager {
@@ -55,6 +56,7 @@ func (gm *GameManager) CreateGame(guildID int64, channelID int64, userID int64, 
 
 	gm.ActiveGames[channelID] = game
 	gm.ActiveGames[userID] = game
+	gm.NumActiveGames++
 
 	return game, nil
 }
@@ -123,6 +125,8 @@ func (gm *GameManager) RemoveGame(gameID int64) error {
 	for _, v := range g.Players {
 		delete(gm.ActiveGames, v.ID)
 	}
+
+	gm.NumActiveGames--
 
 	return nil
 }
