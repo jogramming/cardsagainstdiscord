@@ -29,6 +29,10 @@ func (gm *GameManager) CreateGame(guildID int64, channelID int64, userID int64, 
 		}
 	}
 
+	if len(packs) < 1 {
+		return nil, ErrNoPacks
+	}
+
 	gm.Lock()
 	defer gm.Unlock()
 
