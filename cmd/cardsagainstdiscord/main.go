@@ -60,21 +60,18 @@ func main() {
 var CreateGameCommand = &dcmd.SimpleCmd{
 	ShortDesc: "Creates a cards against humanity game in this channel",
 	RunFunc: func(data *dcmd.Data) (interface{}, error) {
-		_, err := cahManager.CreateGame(data.GS.ID, data.CS.ID, data.Msg.Author.ID, data.Msg.Author.Username, []string{"main"})
+		_, err := cahManager.CreateGame(data.GS.ID, data.CS.ID, data.Msg.Author.ID, data.Msg.Author.Username, "main")
 		if err == nil {
 			log.Println("Created a new game in ", data.CS.ID)
 			return "", nil
 		}
 
-		if err == cardsagainstdiscord.ErrGameAlreadyInChanenl {
-			return "Already a active game in this channel", nil
-		} else if err == cardsagainstdiscord.ErrPlayerAlreadyInGame {
-			return "You're alrady playing in another game", nil
-		} else {
-			return "Something went wrong", err
+		if cahErr := cardsagainstdiscord.HumanizeError(err); cahErr != "" {
+			return cahErr, nil
 		}
 
-		return " ", nil
+		return "Something went wrong", err
+
 	},
 }
 
@@ -92,11 +89,11 @@ var StopCommand = &dcmd.SimpleCmd{
 
 		err := cahManager.RemoveGame(data.CS.ID)
 		if err != nil {
-			if err == cardsagainstdiscord.ErrGameNotFound {
-				return "Couldn't find any game you're part of", nil
-			} else {
-				return "Something bad happened", err
+			if cahErr := cardsagainstdiscord.HumanizeError(err); cahErr != "" {
+				return cahErr, nil
 			}
+
+			return "Something went wrong", err
 		}
 
 		return "Stopped the game", nil
@@ -136,11 +133,11 @@ var KickCommand = &dcmd.SimpleCmd{
 
 		err := cahManager.PlayerTryLeaveGame(userID)
 		if err != nil {
-			if err == cardsagainstdiscord.ErrGameNotFound {
-				return "This user is not part of any game anymore", nil
-			} else {
-				return "Something bad happened", err
+			if cahErr := cardsagainstdiscord.HumanizeError(err); cahErr != "" {
+				return cahErr, nil
 			}
+
+			return "Something went wrong", err
 		}
 
 		return "User removed", nil
