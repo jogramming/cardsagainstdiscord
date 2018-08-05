@@ -37,6 +37,7 @@ func main() {
 	cmdSys.Root.AddCommand(CreateGameCommand, dcmd.NewTrigger("create", "c").SetDisableInDM(true))
 	cmdSys.Root.AddCommand(StopCommand, dcmd.NewTrigger("stop", "end", "s").SetDisableInDM(true))
 	cmdSys.Root.AddCommand(KickCommand, dcmd.NewTrigger("kick").SetDisableInDM(true))
+	cmdSys.Root.AddCommand(PacksCommand, dcmd.NewTrigger("packs").SetDisableInDM(true))
 
 	session.AddHandler(state.HandleEvent)
 	session.AddHandler(cmdSys.HandleMessageCreate)
@@ -141,5 +142,17 @@ var KickCommand = &dcmd.SimpleCmd{
 		}
 
 		return "User removed", nil
+	},
+}
+
+var PacksCommand = &dcmd.SimpleCmd{
+	ShortDesc: "Lists available packs",
+	RunFunc: func(data *dcmd.Data) (interface{}, error) {
+		resp := "Available packs: \n\n"
+		for _, v := range cardsagainstdiscord.Packs {
+			resp += "`" + v.Name + "` - " + v.Description
+		}
+
+		return resp, nil
 	},
 }
