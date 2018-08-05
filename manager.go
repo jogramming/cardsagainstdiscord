@@ -2,15 +2,7 @@ package cardsagainstdiscord
 
 import (
 	"github.com/jonas747/discordgo"
-	"github.com/pkg/errors"
 	"sync"
-)
-
-var (
-	ErrGameAlreadyInChanenl = errors.New("Already a active game in this channel")
-	ErrPlayerAlreadyInGame  = errors.New("Player relady in a game")
-	ErrGameNotFound         = errors.New("Game not found")
-	ErrGameFull             = errors.New("Game is full")
 )
 
 type GameManager struct {
@@ -27,12 +19,21 @@ func NewGameManager(sessionProvider SessionProvider) *GameManager {
 	}
 }
 
-func (gm *GameManager) CreateGame(guildID int64, channelID int64, userID int64, username string, packs []string) (*Game, error) {
+func (gm *GameManager) CreateGame(guildID int64, channelID int64, userID int64, username string, packs ...string) (*Game, error) {
+	for _, v := range packs {
+		_, ok := Packs[v]
+		if !ok {
+			return nil, &ErrUnknownPack{
+				PassedPack: v,
+			}
+		}
+	}
+
 	gm.Lock()
 	defer gm.Unlock()
 
 	if _, ok := gm.ActiveGames[channelID]; ok {
-		return nil, ErrGameAlreadyInChanenl
+		return nil, ErrGameAlreadyInChannel
 	}
 
 	if _, ok := gm.ActiveGames[userID]; ok {

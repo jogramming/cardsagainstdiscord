@@ -3,6 +3,7 @@ package cardsagainstdiscord
 import (
 	"fmt"
 	"github.com/jonas747/discordgo"
+	"github.com/pkg/errors"
 	"strings"
 )
 
@@ -77,4 +78,33 @@ type StaticSessionProvider struct {
 
 func (sp *StaticSessionProvider) SessionForGuild(guildID int64) *discordgo.Session {
 	return sp.Session
+}
+
+var (
+	ErrGameAlreadyInChannel = errors.New("Already a active game in this channel")
+	ErrPlayerAlreadyInGame  = errors.New("Player already in a game")
+	ErrGameNotFound         = errors.New("Game not found")
+	ErrGameFull             = errors.New("Game is full")
+)
+
+type ErrUnknownPack struct {
+	PassedPack string
+}
+
+func (e *ErrUnknownPack) Error() string {
+	return "Unknown pack " + e.PassedPack
+}
+
+func HumanizeError(err error) string {
+	err = errors.Cause(err)
+
+	if err == ErrGameAlreadyInChannel || err == ErrPlayerAlreadyInGame || err == ErrGameNotFound || err == ErrGameFull {
+		return err.Error()
+	}
+
+	if c, ok := err.(*ErrUnknownPack); ok {
+		return c.Error()
+	}
+
+	return ""
 }
