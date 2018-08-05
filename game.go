@@ -396,6 +396,10 @@ func (g *Game) Tick() {
 
 			if !v.MadeSelections(g.CurrentPropmpt) {
 				allPlayersDone = false
+				if !v.sent15sWarning && time.Since(g.StateEntered) > (PickResponseDuration-(time.Second*15)) {
+					v.sent15sWarning = true
+					go g.Session.ChannelMessageSendEmbed(v.Channel, &discordgo.MessageEmbed{Description: "You have 15 seconds left"})
+				}
 			} else {
 				oneResponsePicked = true
 			}
@@ -411,6 +415,15 @@ func (g *Game) Tick() {
 			}
 		}
 	case GameStatePickingWinner:
+		cardCzarPlayer := g.findPlayer(g.CurrentCardCzar)
+		if cardCzarPlayer == nil {
+			return
+		}
+
+		if !cardCzarPlayer.sent15sWarning && time.Since(g.StateEntered) > (PickWinnerDuration-(time.Second*15)) {
+			cardCzarPlayer.sent15sWarning = true
+			go g.Session.ChannelMessageSendEmbed(g.MasterChannel, &discordgo.MessageEmbed{Description: "You have 15 seconds left to pick a winner"})
+		}
 		if time.Since(g.StateEntered) >= PickWinnerDuration {
 			g.cardzarExpired()
 		}
@@ -453,6 +466,7 @@ func (g *Game) startRound() {
 	for _, v := range g.Players {
 		v.Playing = true
 		v.SelectedCards = nil
+		v.sent15sWarning = false
 	}
 
 	lastPick := 1
@@ -943,6 +957,8 @@ type Player struct {
 	Playing bool
 	InGame  bool
 	Banned  bool
+
+	sent15sWarning bool
 
 	LastReactionMenu int64
 }
