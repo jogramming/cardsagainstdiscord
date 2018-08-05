@@ -25,9 +25,10 @@ func AddPack(name string, pack *CardPack) {
 }
 
 type CardPack struct {
-	Name      string
-	Prompts   []*PromptCard
-	Responses []ResponseCard
+	Name        string
+	Description string
+	Prompts     []*PromptCard
+	Responses   []ResponseCard
 }
 
 type PromptCard struct {

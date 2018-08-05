@@ -2,6 +2,8 @@ package cardsagainstdiscord
 
 func init() {
 	pack := &CardPack{
+		Name:        "main",
+		Description: "Base card deck",
 		Prompts: []*PromptCard{
 			&PromptCard{Prompt: `%s + %s = %s.`},
 			&PromptCard{Prompt: `%s is a slippery slope that leads to %s.`},
