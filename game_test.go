@@ -6,9 +6,9 @@ import (
 
 func TestNextCardCzar(t *testing.T) {
 	players := []*Player{
-		{ID: 1, Playing: true},
-		{ID: 5, Playing: true},
-		{ID: 2, Playing: true},
+		{ID: 1, Playing: true, InGame: true},
+		{ID: 5, Playing: true, InGame: true},
+		{ID: 2, Playing: true, InGame: true},
 	}
 
 	current := NextCardCzar(players, 0)
@@ -34,9 +34,9 @@ func TestNextCardCzar(t *testing.T) {
 
 func TestNextCardCzar2(t *testing.T) {
 	players := []*Player{
-		{ID: 5, Playing: true},
-		{ID: 1, Playing: true},
-		{ID: 2, Playing: true},
+		{ID: 5, Playing: true, InGame: true},
+		{ID: 1, Playing: true, InGame: true},
+		{ID: 2, Playing: true, InGame: true},
 	}
 
 	current := NextCardCzar(players, 0)
@@ -62,10 +62,10 @@ func TestNextCardCzar2(t *testing.T) {
 
 func TestNextCardCzar3(t *testing.T) {
 	players := []*Player{
-		{ID: 5, Playing: true},
-		{ID: 1, Playing: true},
-		{ID: 2, Playing: true},
-		{ID: 3, Playing: true},
+		{ID: 5, Playing: true, InGame: true},
+		{ID: 1, Playing: true, InGame: true},
+		{ID: 2, Playing: true, InGame: true},
+		{ID: 3, Playing: true, InGame: true},
 	}
 
 	current := NextCardCzar(players, 0)
@@ -91,5 +91,53 @@ func TestNextCardCzar3(t *testing.T) {
 	current = NextCardCzar(players, current)
 	if current != 1 {
 		t.Error("Got ", current, " exected 1")
+	}
+}
+
+func TestDupeResponses(t *testing.T) {
+	for k, pack := range Packs {
+		g := &Game{
+			Packs: []string{k},
+		}
+
+		pickedResponses := make([]ResponseCard, 0, len(pack.Responses))
+		for i := 0; i < len(pack.Responses); i++ {
+			card := g.getRandomResponseCard()
+			if card == BlankCard {
+				i--
+				continue
+			}
+
+			for _, v := range pickedResponses {
+				if v == card {
+					t.Error(k, ": Got duplicate response: ", v)
+					break
+				}
+			}
+
+			pickedResponses = append(pickedResponses, card)
+		}
+	}
+}
+
+func TestDupePrompts(t *testing.T) {
+	for k, pack := range Packs {
+		g := &Game{
+			Packs: []string{k},
+		}
+
+		pickedPrompts := make([]string, 0, len(pack.Prompts))
+		for i := 0; i < len(pack.Prompts); i++ {
+			prompt := g.randomPrompt()
+
+			for _, v := range pickedPrompts {
+				if v == prompt.Prompt {
+					t.Error(k, ": Got duplicate prompt: ", v)
+					break
+				}
+			}
+
+			pickedPrompts = append(pickedPrompts, prompt.Prompt)
+		}
 	}
 }
