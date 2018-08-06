@@ -9,6 +9,7 @@ import (
 	"net/http"
 	_ "net/http/pprof"
 	"os"
+	"strings"
 )
 
 var cahManager *cardsagainstdiscord.GameManager
@@ -60,8 +61,14 @@ func main() {
 
 var CreateGameCommand = &dcmd.SimpleCmd{
 	ShortDesc: "Creates a cards against humanity game in this channel",
+	CmdArgDefs: []*dcmd.ArgDef{
+		&dcmd.ArgDef{Name: "packs", Type: dcmd.String, Default: "main", Help: "Packs seperated by space"},
+	},
 	RunFunc: func(data *dcmd.Data) (interface{}, error) {
-		_, err := cahManager.CreateGame(data.GS.ID, data.CS.ID, data.Msg.Author.ID, data.Msg.Author.Username, "main")
+		pStr := data.Args[0].Str()
+		packs := strings.Fields(pStr)
+
+		_, err := cahManager.CreateGame(data.GS.ID, data.CS.ID, data.Msg.Author.ID, data.Msg.Author.Username, packs...)
 		if err == nil {
 			log.Println("Created a new game in ", data.CS.ID)
 			return "", nil
@@ -150,7 +157,7 @@ var PacksCommand = &dcmd.SimpleCmd{
 	RunFunc: func(data *dcmd.Data) (interface{}, error) {
 		resp := "Available packs: \n\n"
 		for _, v := range cardsagainstdiscord.Packs {
-			resp += "`" + v.Name + "` - " + v.Description
+			resp += "`" + v.Name + "` - " + v.Description + "\n"
 		}
 
 		return resp, nil
