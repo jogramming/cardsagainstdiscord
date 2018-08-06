@@ -464,6 +464,10 @@ func (g *Game) startRound() {
 	g.Responses = nil
 
 	for _, v := range g.Players {
+		if !v.InGame {
+			continue
+		}
+
 		v.Playing = true
 		v.SelectedCards = nil
 		v.sent15sWarning = false
@@ -546,6 +550,10 @@ func (g *Game) presentStartRound() {
 
 	for _, player := range g.Players {
 		go func(p *Player) {
+			if !p.PlayingThisRound() {
+				return
+			}
+
 			p.PresentBoard(g.Session, g.CurrentPropmpt, g.CurrentCardCzar)
 		}(player)
 	}
