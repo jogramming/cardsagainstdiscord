@@ -102,7 +102,7 @@ var StopCommand = &dcmd.SimpleCmd{
 }
 
 var KickCommand = &dcmd.SimpleCmd{
-	ShortDesc:       "Kicks a player from the card against humanity game in this channle, only the game master can do this",
+	ShortDesc:       "Kicks a player from the card against humanity game in this channel, only the game master can do this",
 	RequiredArgDefs: 1,
 	CmdArgDefs: []*dcmd.ArgDef{
 		&dcmd.ArgDef{Name: "user", Type: dcmd.UserID},
