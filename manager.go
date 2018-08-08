@@ -128,7 +128,9 @@ func (gm *GameManager) RemoveGame(gameID int64) error {
 	delete(gm.ActiveGames, g.MasterChannel)
 	delete(gm.ActiveGames, g.GameMaster)
 	for _, v := range g.Players {
-		delete(gm.ActiveGames, v.ID)
+		if v.InGame {
+			delete(gm.ActiveGames, v.ID)
+		}
 	}
 
 	gm.NumActiveGames--
