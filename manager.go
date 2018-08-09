@@ -138,6 +138,43 @@ func (gm *GameManager) RemoveGame(gameID int64) error {
 	return nil
 }
 
+func (gm *GameManager) TryAdminRemoveGame(admin int64) error {
+	gm.Lock()
+	defer gm.Unlock()
+
+	g, ok := gm.ActiveGames[admin]
+	if !ok {
+		return ErrGameNotFound
+	}
+
+	g.Lock()
+	defer g.Unlock()
+
+	if g.GameMaster != admin {
+		return ErrNotGM
+	}
+
+	if g.stopped {
+		return ErrStoppedAlready
+	}
+
+	close(g.stopch)
+	g.stopped = true
+
+	// Remove all references to the game
+	delete(gm.ActiveGames, g.MasterChannel)
+	delete(gm.ActiveGames, g.GameMaster)
+	for _, v := range g.Players {
+		if v.InGame {
+			delete(gm.ActiveGames, v.ID)
+		}
+	}
+
+	gm.NumActiveGames--
+
+	return nil
+}
+
 func (gm *GameManager) HandleReactionAdd(ra *discordgo.MessageReactionAdd) {
 	cid := ra.ChannelID
 	userID := ra.UserID

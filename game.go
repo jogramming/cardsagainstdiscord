@@ -349,6 +349,8 @@ func (g *Game) Stop() {
 		return // Already stopped
 	}
 
+	g.stopped = true
+
 	close(g.stopch)
 	g.Unlock()
 }

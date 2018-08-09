@@ -86,16 +86,7 @@ var CreateGameCommand = &dcmd.SimpleCmd{
 var StopCommand = &dcmd.SimpleCmd{
 	ShortDesc: "Stops a cards against humanity game in this channel",
 	RunFunc: func(data *dcmd.Data) (interface{}, error) {
-		game := cahManager.FindGameFromChannelOrUser(data.Msg.Author.ID)
-		if game == nil {
-			return "Couln't find any game you're part of", nil
-		}
-
-		if game.GameMaster != data.Msg.Author.ID {
-			return "You're not the game master of this game", nil
-		}
-
-		err := cahManager.RemoveGame(data.CS.ID)
+		err := cahManager.TryAdminRemoveGame(data.Msg.Author.ID)
 		if err != nil {
 			if cahErr := cardsagainstdiscord.HumanizeError(err); cahErr != "" {
 				return cahErr, nil
