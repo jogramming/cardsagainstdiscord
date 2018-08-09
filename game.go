@@ -221,19 +221,19 @@ func (g *Game) findPlayer(id int64) *Player {
 	return nil
 }
 
-func (g *Game) RemovePlayer(id int64) {
+func (g *Game) RemovePlayer(id int64) bool {
 	g.Lock()
 	defer g.Unlock()
-	g.removePlayer(id)
+	return g.removePlayer(id)
 }
 
-func (g *Game) removePlayer(id int64) {
+func (g *Game) removePlayer(id int64) bool {
 	found := false
 	numPlaying := 0
 	for i, v := range g.Players {
 		if v.ID == id {
 			if !v.InGame {
-				return
+				return false
 			}
 
 			// Don't remember more than 200 players, if this limit is reached its more than likely abuse
@@ -254,7 +254,7 @@ func (g *Game) removePlayer(id int64) {
 	}
 
 	if !found {
-		return
+		return false
 	}
 
 	go g.sendAnnouncment(fmt.Sprintf("<@%d> Left the game (%d/%d)", id, numPlaying, g.PlayerLimit), false)
@@ -272,6 +272,8 @@ func (g *Game) removePlayer(id int64) {
 			}
 		}
 	}
+
+	return true
 }
 
 func (g *Game) setState(state GameState) {

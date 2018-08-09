@@ -110,6 +110,31 @@ func (gm *GameManager) PlayerTryLeaveGame(playerID int64) error {
 	return ErrGameNotFound
 }
 
+func (gm *GameManager) AdminKickUser(admin, playerID int64) error {
+	gm.Lock()
+	defer gm.Unlock()
+
+	g, ok := gm.ActiveGames[admin]
+	if !ok {
+		return ErrGameNotFound
+	}
+
+	g.RLock()
+	if g.GameMaster != admin {
+		g.RUnlock()
+		return ErrNotGM
+	}
+	g.RUnlock()
+
+	if g.RemovePlayer(playerID) {
+		delete(gm.ActiveGames, playerID)
+	} else {
+		return ErrPlayerNotInGame
+	}
+
+	return nil
+}
+
 func (gm *GameManager) RemoveGame(gameID int64) error {
 	gm.Lock()
 	defer gm.Unlock()

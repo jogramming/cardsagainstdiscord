@@ -106,31 +106,9 @@ var KickCommand = &dcmd.SimpleCmd{
 		&dcmd.ArgDef{Name: "user", Type: dcmd.UserID},
 	},
 	RunFunc: func(data *dcmd.Data) (interface{}, error) {
-		game := cahManager.FindGameFromChannelOrUser(data.Msg.Author.ID)
-		if game == nil {
-			return "Couln't find any game you're part of", nil
-		}
-
-		if game.GameMaster != data.Msg.Author.ID {
-			return "You're not the game master of this game", nil
-		}
-
 		userID := data.Args[0].Int64()
-		game.RLock()
-		found := false
-		for _, v := range game.Players {
-			if v.ID == userID {
-				found = true
-				break
-			}
-		}
-		game.RUnlock()
 
-		if !found {
-			return "User is not part of your game", nil
-		}
-
-		err := cahManager.PlayerTryLeaveGame(userID)
+		err := cahManager.AdminKickUser(data.Msg.Author.ID, userID)
 		if err != nil {
 			if cahErr := cardsagainstdiscord.HumanizeError(err); cahErr != "" {
 				return cahErr, nil
