@@ -667,7 +667,7 @@ func (g *Game) presentPickedResponseCards() {
 }
 
 func (g *Game) cardzarExpired() {
-	msg, err := g.Session.ChannelMessageSend(g.MasterChannel, fmt.Sprintf("<%d> didn't pick a winner in %d seconds, skipping round...", g.CurrentCardCzar, int(PickWinnerDuration.Seconds())))
+	msg, err := g.Session.ChannelMessageSend(g.MasterChannel, fmt.Sprintf("<@%d> didn't pick a winner in %d seconds, skipping round...", g.CurrentCardCzar, int(PickWinnerDuration.Seconds())))
 	if err == nil {
 		go g.addCommonMenuReactions(msg.ID)
 	}
