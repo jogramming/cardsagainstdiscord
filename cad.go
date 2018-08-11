@@ -97,7 +97,7 @@ type ErrUnknownPack struct {
 }
 
 func (e *ErrUnknownPack) Error() string {
-	return "Unknown pack " + e.PassedPack
+	return "Unknown pack `" + e.PassedPack + "`" 
 }
 
 func HumanizeError(err error) string {
