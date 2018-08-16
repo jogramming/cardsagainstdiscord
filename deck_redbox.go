@@ -351,5 +351,5 @@ func init() {
 		},
 	}
 
-	AddPack("redbox", pack)
+	AddPack(pack)
 }

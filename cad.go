@@ -9,7 +9,7 @@ import (
 
 var Packs = make(map[string]*CardPack)
 
-func AddPack(name string, pack *CardPack) {
+func AddPack(pack *CardPack) {
 	// Count picks
 	for _, v := range pack.Prompts {
 		numPicks := strings.Count(v.Prompt, "%s")
@@ -21,7 +21,7 @@ func AddPack(name string, pack *CardPack) {
 		}
 	}
 
-	Packs[name] = pack
+	Packs[pack.Name] = pack
 }
 
 type CardPack struct {
@@ -97,7 +97,7 @@ type ErrUnknownPack struct {
 }
 
 func (e *ErrUnknownPack) Error() string {
-	return "Unknown pack `" + e.PassedPack + "`" 
+	return "Unknown pack `" + e.PassedPack + "`"
 }
 
 func HumanizeError(err error) string {

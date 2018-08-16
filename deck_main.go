@@ -1447,5 +1447,5 @@ func init() {
 		},
 	}
 
-	AddPack("main", pack)
+	AddPack(pack)
 }
