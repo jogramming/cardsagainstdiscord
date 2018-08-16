@@ -20,7 +20,13 @@ func NewGameManager(sessionProvider SessionProvider) *GameManager {
 }
 
 func (gm *GameManager) CreateGame(guildID int64, channelID int64, userID int64, username string, packs ...string) (*Game, error) {
+	allPacks := false
 	for _, v := range packs {
+		if v == "*" {
+			allPacks = true
+			break
+		}
+
 		_, ok := Packs[v]
 		if !ok {
 			return nil, &ErrUnknownPack{
@@ -29,8 +35,15 @@ func (gm *GameManager) CreateGame(guildID int64, channelID int64, userID int64, 
 		}
 	}
 
-	if len(packs) < 1 {
+	if len(packs) < 1 && !allPacks {
 		return nil, ErrNoPacks
+	}
+
+	if allPacks {
+		packs = make([]string, 0, len(Packs))
+		for k, _ := range Packs {
+			packs = append(packs, k)
+		}
 	}
 
 	gm.Lock()
