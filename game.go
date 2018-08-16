@@ -3,7 +3,9 @@ package cardsagainstdiscord
 import (
 	"fmt"
 	"github.com/jonas747/discordgo"
+	"log"
 	"math/rand"
+	"runtime/debug"
 	"sort"
 	"strings"
 	"sync"
@@ -358,6 +360,15 @@ func (g *Game) Stop() {
 }
 
 func (g *Game) runTicker() {
+	defer func() {
+		if r := recover(); r != nil {
+			stack := string(debug.Stack())
+			log.Println("CAH: cid: ", g.MasterChannel, " recovered from panic in running game!: ", r, "\n", stack)
+			go g.Session.ChannelMessageSend(g.MasterChannel, "The running game almost caused a crash! The game has been terminated as a result. Contact the bot owner.")
+			go g.Manager.RemoveGame(g.MasterChannel)
+		}
+	}()
+
 	ticker := time.NewTicker(time.Second)
 	for {
 		select {
@@ -468,13 +479,12 @@ func (g *Game) startRound() {
 	g.Responses = nil
 
 	for _, v := range g.Players {
-		if !v.InGame {
-			continue
-		}
-
-		v.Playing = true
 		v.SelectedCards = nil
 		v.sent15sWarning = false
+
+		if v.InGame {
+			v.Playing = true
+		}
 	}
 
 	lastPick := 1
