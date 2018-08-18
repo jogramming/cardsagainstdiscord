@@ -224,7 +224,6 @@ func init() {
 			&PromptCard{Prompt: `What's the most emo?`},
 			&PromptCard{Prompt: `What's the new fad diet?`},
 			&PromptCard{Prompt: `What's the next Happy Meal® toy?`},
-			&PromptCard{Prompt: `What's the next superhero/sidekick duo?`},
 			&PromptCard{Prompt: `What's there a ton of in heaven?`},
 			&PromptCard{Prompt: `What's there a tonne of in heaven?`},
 			&PromptCard{Prompt: `When all else fails, I can always masturbate to %s.`},
