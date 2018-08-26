@@ -68,15 +68,16 @@ func (gm *GameManager) CreateGame(guildID int64, channelID int64, userID int64, 
 		Session:       gm.SessionProvider.SessionForGuild(guildID),
 	}
 
-	game.Created()
+	err = game.Created()
+	if err == nil {
+		game.AddPlayer(userID, username)
 
-	game.AddPlayer(userID, username)
+		gm.ActiveGames[channelID] = game
+		gm.ActiveGames[userID] = game
+		gm.NumActiveGames++
+	}
 
-	gm.ActiveGames[channelID] = game
-	gm.ActiveGames[userID] = game
-	gm.NumActiveGames++
-
-	return game, nil
+	return game, err
 }
 
 func (gm *GameManager) FindGameFromChannelOrUser(id int64) *Game {

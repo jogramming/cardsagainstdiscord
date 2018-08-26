@@ -113,7 +113,7 @@ type PickedResonse struct {
 	Selections []ResponseCard
 }
 
-func (g *Game) Created() {
+func (g *Game) Created() error {
 	g.LastAction = time.Now()
 
 	embed := &discordgo.MessageEmbed{
@@ -122,9 +122,8 @@ func (g *Game) Created() {
 	}
 
 	msg, err := g.Session.ChannelMessageSendEmbed(g.MasterChannel, embed)
-
 	if err != nil {
-		return
+		return err
 	}
 
 	g.LastMenuMessage = msg.ID
