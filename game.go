@@ -136,6 +136,8 @@ func (g *Game) Created() error {
 	go g.runTicker()
 
 	go g.addCommonMenuReactions(msg.ID)
+
+	return nil
 }
 
 func (g *Game) loadPackResponses() {

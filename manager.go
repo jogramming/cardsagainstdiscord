@@ -68,7 +68,7 @@ func (gm *GameManager) CreateGame(guildID int64, channelID int64, userID int64, 
 		Session:       gm.SessionProvider.SessionForGuild(guildID),
 	}
 
-	err = game.Created()
+	err := game.Created()
 	if err == nil {
 		game.AddPlayer(userID, username)
 
