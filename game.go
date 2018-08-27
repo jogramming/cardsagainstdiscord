@@ -349,15 +349,18 @@ func (g *Game) sendAnnouncmentMenu(msg string) {
 
 func (g *Game) Stop() {
 	g.Lock()
+	g.stop()
+	g.Unlock()
+}
+
+func (g *Game) stop() {
 	if g.stopped {
-		g.Unlock()
 		return // Already stopped
 	}
 
 	g.stopped = true
 
 	close(g.stopch)
-	g.Unlock()
 }
 
 func (g *Game) runTicker() {
@@ -689,6 +692,7 @@ func (g *Game) cardzarExpired() {
 func (g *Game) gameExpired() {
 	g.Session.ChannelMessageSend(g.MasterChannel, "CAH Game expired, too long without any actions or no players.")
 	go g.Manager.RemoveGame(g.MasterChannel)
+	g.stop()
 }
 
 func (g *Game) addCommonMenuReactions(mID int64) {
