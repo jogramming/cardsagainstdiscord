@@ -19,7 +19,7 @@ func NewGameManager(sessionProvider SessionProvider) *GameManager {
 	}
 }
 
-func (gm *GameManager) CreateGame(guildID int64, channelID int64, userID int64, username string, packs ...string) (*Game, error) {
+func (gm *GameManager) CreateGame(guildID int64, channelID int64, userID int64, username string, voteMode bool, packs ...string) (*Game, error) {
 	allPacks := false
 	for _, v := range packs {
 		if v == "*" {
@@ -63,6 +63,7 @@ func (gm *GameManager) CreateGame(guildID int64, channelID int64, userID int64, 
 		GuildID:       guildID,
 		Packs:         packs,
 		GameMaster:    userID,
+		VoteMode:      voteMode,
 		PlayerLimit:   10,
 		WinLimit:      10,
 		Session:       gm.SessionProvider.SessionForGuild(guildID),

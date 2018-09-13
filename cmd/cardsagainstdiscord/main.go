@@ -4,7 +4,7 @@ import (
 	"github.com/jonas747/cardsagainstdiscord"
 	"github.com/jonas747/dcmd"
 	"github.com/jonas747/discordgo"
-	"github.com/jonas747/dutil/dstate"
+	"github.com/jonas747/dstate"
 	"log"
 	"net/http"
 	_ "net/http/pprof"
@@ -64,11 +64,15 @@ var CreateGameCommand = &dcmd.SimpleCmd{
 	CmdArgDefs: []*dcmd.ArgDef{
 		&dcmd.ArgDef{Name: "packs", Type: dcmd.String, Default: "main", Help: "Packs seperated by space, or * to include all of them"},
 	},
+	CmdSwitches: []*dcmd.ArgDef{
+		{Switch: "v", Name: "Vote mode, no cardczar"},
+	},
 	RunFunc: func(data *dcmd.Data) (interface{}, error) {
+		voteMode := data.Switch("v").Bool()
 		pStr := data.Args[0].Str()
 		packs := strings.Fields(pStr)
 
-		_, err := cahManager.CreateGame(data.GS.ID, data.CS.ID, data.Msg.Author.ID, data.Msg.Author.Username, packs...)
+		_, err := cahManager.CreateGame(data.GS.ID, data.CS.ID, data.Msg.Author.ID, data.Msg.Author.Username, voteMode, packs...)
 		if err == nil {
 			log.Println("Created a new game in ", data.CS.ID)
 			return "", nil
