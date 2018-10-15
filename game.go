@@ -451,6 +451,7 @@ func (g *Game) Tick() {
 			for _, v := range g.Players {
 				if v.VotedFor != 0 {
 					g.allVoted()
+					break
 				}
 			}
 
