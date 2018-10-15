@@ -709,6 +709,25 @@ func (g *Game) presentPickedResponseCards(edit bool) {
 		}
 	}
 
+	if g.VoteMode {
+		remainingPlayersField := &discordgo.MessageEmbedField{
+			Name: "Waiting for...",
+		}
+
+		for _, v := range g.Players {
+			if v.PlayingThisRound() && v.VotedFor == 0 {
+				if remainingPlayersField.Value != "" {
+					remainingPlayersField.Value += ", "
+				}
+				remainingPlayersField.Value += "<@" + discordgo.StrID(v.ID) + ">"
+			}
+		}
+
+		if remainingPlayersField.Value != "" {
+			embed.Fields = append(embed.Fields, remainingPlayersField)
+		}
+	}
+
 	if edit {
 		g.Session.ChannelMessageEditEmbed(g.MasterChannel, g.LastMenuMessage, embed)
 		return
