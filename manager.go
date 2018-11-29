@@ -242,3 +242,21 @@ func (gm *GameManager) HandleMessageCreate(msgCreate *discordgo.MessageCreate) {
 		gm.RUnlock()
 	}
 }
+
+func (gm *GameManager) LoadGameFromSerializedState(game *Game) {
+	game.Session = gm.SessionProvider.SessionForGuild(game.GuildID)
+	game.Manager = gm
+	game.stopch = make(chan bool)
+
+	gm.Lock()
+	for _, v := range game.Players {
+		if v.InGame {
+			gm.ActiveGames[v.ID] = game
+		}
+	}
+
+	gm.ActiveGames[game.MasterChannel] = game
+	gm.Unlock()
+
+	game.loadFromSerializedState()
+}

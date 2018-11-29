@@ -68,10 +68,10 @@ var (
 )
 
 type Game struct {
-	sync.RWMutex
+	sync.RWMutex `json:"-" msgpack:"-"`
 	// Never chaged
-	Manager *GameManager
-	Session *discordgo.Session
+	Manager *GameManager       `json:"-" msgpack:"-"`
+	Session *discordgo.Session `json:"-" msgpack:"-"`
 
 	// The main channel this game resides in, never changes
 	MasterChannel int64
@@ -105,8 +105,9 @@ type Game struct {
 
 	Responses []*PickedResonse
 
-	stopped bool
-	stopch  chan bool
+	stopped       bool
+	tickerRunning bool
+	stopch        chan bool
 }
 
 type PickedResonse struct {
@@ -137,7 +138,7 @@ func (g *Game) Created() error {
 	go g.runTicker()
 
 	go g.addCommonMenuReactions(msg.ID)
-
+	g.tickerRunning = true
 	return nil
 }
 
@@ -1124,6 +1125,27 @@ func (g *Game) playerPickedResponseReaction(player *Player, ra *discordgo.Messag
 		Description: respMsg,
 	}
 	go g.Session.ChannelMessageSendEmbed(player.Channel, embed)
+}
+
+func (g *Game) loadFromSerializedState() {
+	g.Lock()
+	// update references
+	for _, v := range g.Responses {
+		for _, p := range g.Players {
+			if v.Player.ID == p.ID {
+				v.Player = p
+				break
+			}
+		}
+	}
+
+	if !g.tickerRunning {
+		go g.runTicker()
+	}
+	g.tickerRunning = true
+	g.Unlock()
+
+	go g.sendAnnouncment("Game has been fully loaded, it will still take another seconds before the game has resumed.", false)
 }
 
 type Player struct {
