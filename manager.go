@@ -256,6 +256,7 @@ func (gm *GameManager) LoadGameFromSerializedState(game *Game) {
 	}
 
 	gm.ActiveGames[game.MasterChannel] = game
+	gm.NumActiveGames++
 	gm.Unlock()
 
 	game.loadFromSerializedState()
