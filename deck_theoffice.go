@@ -139,7 +139,7 @@ func init() {
 			`Going mach five`,
 			`That face Jim makes`,
 			`DECLARING BANKRUPTCY!`,
-			`Kevin's famous chili.`
+			`Kevin's famous chili.`,
 			`Meredith's casual friday dress`,
 			`Declaring yourself "Hay King" to the shock of the crowd`,
 			`Finally fulfilling your lifelong dream of getting promoted to regional manager, accidentally firing a gun at work, and getting demoted`,
@@ -187,7 +187,6 @@ func init() {
 			`Beets`,
 			`The Sabre Pyramid Tablet`,
 			`That's what she said`,
-
 		},
 	}
 
