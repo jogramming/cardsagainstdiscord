@@ -10,6 +10,7 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"unicode/utf8"
 )
 
 type GameState int
@@ -700,13 +701,29 @@ func (g *Game) presentPickedResponseCards(edit bool) {
 		},
 	}
 
+	currentEmbedField := embed.Fields[1]
+
 	for i, v := range g.Responses {
+		text := ""
+
 		filledPrompt := g.CurrentPropmpt.WithCards(v.Selections)
 
 		if g.VoteMode {
-			embed.Fields[1].Value += fmt.Sprintf("%s: %s (`%d`) \n\n", CardSelectionEmojis[i], filledPrompt, v.Player.ReceivedVotes)
+			text = fmt.Sprintf("%s: %s (`%d`) \n\n", CardSelectionEmojis[i], filledPrompt, v.Player.ReceivedVotes)
 		} else {
-			embed.Fields[1].Value += CardSelectionEmojis[i] + ": " + filledPrompt + "\n\n"
+			text = CardSelectionEmojis[i] + ": " + filledPrompt + "\n\n"
+		}
+
+		// Embed field values can be max 1024 in length, so make new fields as needed
+		if currentEmbedField.Value != "" && utf8.RuneCountInString(currentEmbedField.Value)+utf8.RuneCountInString(text) > 1000 {
+			newField := &discordgo.MessageEmbedField{
+				Name:  "...",
+				Value: text,
+			}
+			embed.Fields = append(embed.Fields, newField)
+			currentEmbedField = newField
+		} else {
+			currentEmbedField.Value += text
 		}
 	}
 
