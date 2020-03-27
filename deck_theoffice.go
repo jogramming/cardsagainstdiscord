@@ -28,7 +28,7 @@ func init() {
 			&PromptCard{Prompt: `What is Michael's worst fear? %s`},
 			&PromptCard{Prompt: `What does Michael hate more than Toby? %s`},
 			&PromptCard{Prompt: `The subject of today's conference meeting: %s.`},
-			&PromptCard{Prompt: `The party planning committee decided on a %s themed Christmas party this year. %s`},
+			&PromptCard{Prompt: `The party planning committee decided on a %s themed Christmas party this year.`},
 			&PromptCard{Prompt: `Bears. Beets. %s.`},
 			&PromptCard{Prompt: `If I had a gun with two bullets and I was in a room with %s and Toby, I would shoot Toby twice.`},
 			&PromptCard{Prompt: `%s. That's what she said!`},
