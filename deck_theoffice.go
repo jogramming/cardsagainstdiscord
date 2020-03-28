@@ -160,7 +160,7 @@ func init() {
 			`Signing something that you don't want to sign as "Daffy Duck."`,
 			`Hardcore parkour`,
 			`Dr. Crentist, the Dentist`,
-			`Flonkerton. THe national sport of Icelandic paper companies`,
+			`Flonkerton. The national sport of Icelandic paper companies`,
 			`A "World's Best Boss" mug that you bought for yourself`,
 			`Mose Schrute`,
 			`Perfectenschlag. Defined as when a man's life comes together perfectly, or perfect pork anus`,
