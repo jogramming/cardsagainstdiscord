@@ -2,15 +2,15 @@ package cardsagainstdiscord
 
 func init() {
 	pack := &CardPack{
-		Name:        "reject",
+		Name:		"reject",
 		Description: "Reject Packs - 1, 2, and 3",
 		Prompts: []*PromptCard{
 			
-            &PromptCard{Prompt: `Bitch, you look nasty. You look disgusting. You look like you're %s. Go home, bitch.`},
-            &PromptCard{Prompt: `So this family circus act comes in to see a talent agent in Hoboken, and the agent askes what they do. The father of the act jumps up and starts to furiously beat off into a towel while his wife whips her hair back and forth to that famous song - originally sung by one of Will Smith's kids, "I Whipe My Hair Bcak And Forth" - which her twin daughters are singing while they braid each other's pubes, all while the twin BROTHERS are creating a real-estate bubble by purchasing houses and flipping them for needless profit, and all THIS is happening while the grandmother is peeing into a Smuckers jar and slapping her ass. The whole thing ends with the family spitting into each other's assholes. The talent agent can't believe it. He looks at the sweaty father who has just spit into his mother's asshole and says. "WOW. This is great. Whaddya call yourselves?" And the guy looks at him and says, "We're %s."`},
-            &PromptCard{Prompt: `From WBEZ Chicago, it's This American Life. Today on our program, %s. Stay with us.`},
-            &PromptCard{Prompt: `My name is Inigo Montoya. You killed my father. Prepare for %s.`},
-            &PromptCard{Prompt: `Sir, we found you passed out naked on the side of the road. What's the last thing you remember? %s`},
+			&PromptCard{Prompt: `Bitch, you look nasty. You look disgusting. You look like you're %s. Go home, bitch.`},
+			&PromptCard{Prompt: `So this family circus act comes in to see a talent agent in Hoboken, and the agent askes what they do. The father of the act jumps up and starts to furiously beat off into a towel while his wife whips her hair back and forth to that famous song - originally sung by one of Will Smith's kids, "I Whipe My Hair Bcak And Forth" - which her twin daughters are singing while they braid each other's pubes, all while the twin BROTHERS are creating a real-estate bubble by purchasing houses and flipping them for needless profit, and all THIS is happening while the grandmother is peeing into a Smuckers jar and slapping her ass. The whole thing ends with the family spitting into each other's assholes. The talent agent can't believe it. He looks at the sweaty father who has just spit into his mother's asshole and says. "WOW. This is great. Whaddya call yourselves?" And the guy looks at him and says, "We're %s."`},
+			&PromptCard{Prompt: `From WBEZ Chicago, it's This American Life. Today on our program, %s. Stay with us.`},
+			&PromptCard{Prompt: `My name is Inigo Montoya. You killed my father. Prepare for %s.`},
+			&PromptCard{Prompt: `Sir, we found you passed out naked on the side of the road. What's the last thing you remember? %s`},
 			&PromptCard{Prompt: `The elders of the Ibo tribe of Nigeria recommend %s as a cure for impotence.`},
 			&PromptCard{Prompt: `The Westboro Baptist Church is now picketing soldiers' funerals with signs that read 'GOD HATES %s!'`},
 			&PromptCard{Prompt: `What are two cards in your hand that you want to get rid of? %s and %s`},
@@ -38,10 +38,10 @@ func init() {
 			`Collapsing into singularity. Twenty minutes fo foreplay, three minutes of coitus, five minutes of rest, back to the yards for some croquet.`,
 			`Computers.`,
 			`Cum, but it's ranch.`,
-		    `Fashion… heard of if?`,
+			`Fashion… heard of if?`,
 			`Getting my mind boggled by a gang of mind bogglers.`,
 			`Letting these hoes know.`,
-		    `Meatballs, meatballs, meatballs!`,
+			`Meatballs, meatballs, meatballs!`,
 			`Passing fart and making toilet.`,
 			`Running afoul of the Sultan's Janissaries.`,
 			`Sheboygan, Wisconsin.`,

@@ -2,16 +2,16 @@ package cardsagainstdiscord
 
 func init() {
 	pack := &CardPack{
-		Name:        "college",
+		Name:		"college",
 		Description: "College Pack",
 		Prompts: []*PromptCard{
 			
-            &PromptCard{Prompt: `All classes today are cancelled due to %s.`},
-            &PromptCard{Prompt: `Did you know? Our college was recently named the #1 school for %s!`},
-            &PromptCard{Prompt: `In this paper, I will explore %s from a feminist perspective.`},
-            &PromptCard{Prompt: `My memory of last night is pretty hazy. I remember %s and that's pretty much it.`},
-            &PromptCard{Prompt: `Pledges! Time to prove you're Delta Phi material. Chug this beer, take off your shirts, and get ready for %s.`},
-            &PromptCard{Prompt: `The Department of Psychology is looking for paid research volunteers. Are you 18-25 and suffering from %s.`},
+			&PromptCard{Prompt: `All classes today are cancelled due to %s.`},
+			&PromptCard{Prompt: `Did you know? Our college was recently named the #1 school for %s!`},
+			&PromptCard{Prompt: `In this paper, I will explore %s from a feminist perspective.`},
+			&PromptCard{Prompt: `My memory of last night is pretty hazy. I remember %s and that's pretty much it.`},
+			&PromptCard{Prompt: `Pledges! Time to prove you're Delta Phi material. Chug this beer, take off your shirts, and get ready for %s.`},
+			&PromptCard{Prompt: `The Department of Psychology is looking for paid research volunteers. Are you 18-25 and suffering from %s.`},
 		},
 
 		Responses: []ResponseCard{
