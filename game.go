@@ -292,11 +292,6 @@ func (g *Game) nextRound() {
 }
 
 func (g *Game) getRandomResponseCard() ResponseCard {
-	f := rand.Float64()
-	if f < BlankCardChance {
-		return BlankCard
-	}
-
 	if len(g.availableResponses) < 1 {
 		g.loadPackResponses() // re-shuffle basically, TODO: exclude current hands
 	}
@@ -304,6 +299,12 @@ func (g *Game) getRandomResponseCard() ResponseCard {
 	i := rand.Intn(len(g.availableResponses))
 	card := g.availableResponses[i]
 	g.availableResponses = append(g.availableResponses[:i], g.availableResponses[i+1:]...)
+
+	// check whether a blank card was selected, return BlankCard if so
+	if string(card) == "%blank" { // This is the string that signifies a blank card
+		card = BlankCard
+	}
+
 	return card
 }
 
