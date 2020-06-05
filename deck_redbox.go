@@ -348,6 +348,9 @@ func init() {
 			`White power`,
 			`Words, words, words`,
 			`Zeus's sexual appetites`,
+			`%blank`,
+			`%blank`,
+			`%blank`,
 		},
 	}
 

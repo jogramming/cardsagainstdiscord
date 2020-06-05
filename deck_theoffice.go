@@ -42,6 +42,7 @@ func init() {
 			&PromptCard{Prompt: `The hardest thing about working at Dunder Mifflin is %s.`},
 			&PromptCard{Prompt: `What makes Dwight, Dwight? %s`},
 		},
+
 		Responses: []ResponseCard{
 			`The length of Roy and Pam's engagement`,
 			`Gabe Lewis`,
@@ -186,6 +187,7 @@ func init() {
 			`Beets`,
 			`The Sabre Pyramid Tablet`,
 			`That's what she said`,
+			`%blank`,
 		},
 	}
 
