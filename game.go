@@ -44,7 +44,6 @@ const (
 	GameExpireAfter        = time.Second * 300
 	GameExpireAfterPregame = time.Minute * 30
 
-	BlankCardChance              = 0.01
 	BlankCard       ResponseCard = "(write your own response)"
 )
 
