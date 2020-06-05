@@ -2,12 +2,10 @@ package cardsagainstdiscord
 
 func init() {
 	pack := &CardPack{
-		Name:        "20-blanks",
-		Description: "Deck of 20 blank response cards",
-		// Can I omit "Prompts" like this?
-		// Prompts: []*PromptCard{
-		// 	&PromptCard{Prompt: `Prompt text here, with %s as a blank`},
-		// },
+		Name:        "40-blanks",
+		Description: "Deck of 40 blank response cards",
+		// Can I define an empty "Prompts" set like this?
+		Prompts: []*PromptCard{},
 		Responses: []ResponseCard{
 			`%blank`,
 			`%blank`,
