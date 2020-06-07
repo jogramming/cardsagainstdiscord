@@ -4,7 +4,6 @@ func init() {
 	pack := &CardPack{
 		Name:        "60-blanks",
 		Description: "Deck of 60 blank response cards",
-		// Can I define an empty "Prompts" set like this?
 		Prompts: []*PromptCard{},
 		Responses: []ResponseCard{
 			`%blank`,
