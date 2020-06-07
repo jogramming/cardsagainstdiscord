@@ -186,6 +186,7 @@ func init() {
 			`Beets`,
 			`The Sabre Pyramid Tablet`,
 			`That's what she said`,
+			`%blank`,
 		},
 	}
 

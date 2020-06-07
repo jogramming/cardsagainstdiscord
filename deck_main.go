@@ -1443,6 +1443,18 @@ func init() {
 			`YOU MUST CONSTRUCT ADDITIONAL PYLONS`,
 			`Your mum`,
 			`Your weird brother`,
+			`%blank`,
+			`%blank`,
+			`%blank`,
+			`%blank`,
+			`%blank`,
+			`%blank`,
+			`%blank`,
+			`%blank`,
+			`%blank`,
+			`%blank`,
+			`%blank`,
+			`%blank`,
 		},
 	}
 
