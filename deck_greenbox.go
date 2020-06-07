@@ -309,6 +309,8 @@ func init() {
 			`Whooping your ass at Mario Kart`,
 			`Working so hard to have muscles and then having them`,
 			`You`,
+			`%blank`,
+			`%blank`,
 		},
 	}
 

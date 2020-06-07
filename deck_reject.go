@@ -89,6 +89,7 @@ func init() {
 			`Playing an ocarina to summon Ultra-Congress from the sea`,
 			`Super yoga`,
 			`The John D. and Catherine T. MacArthur Foundation`,
+			`%blank`,
 		},
 	}
 

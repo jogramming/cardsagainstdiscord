@@ -326,6 +326,8 @@ func init() {
 			`Whatever a McRib® is made of`,
 			`Whatever you wish, mother`,
 			`Whispering all sexy`,
+			`%blank`,
+			`%blank`,
 		},
 	}
 

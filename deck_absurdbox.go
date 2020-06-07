@@ -51,7 +51,6 @@ func init() {
 			&PromptCard{Prompt: `You can call me David Copperfield, because I'm about to make %s disappear.`},
 			&PromptCard{Prompt: `You city folk would never understand the quiet dignity of %s.`},
 		},
-
 		Responses: []ResponseCard{
 			`A 12-foot scepter of bone`,
 			`A basketball that screams every time it gets bounced`,
@@ -308,6 +307,9 @@ func init() {
 			`Your little booty in them underpants`,
 			`Your mouth`,
 			`Yummy yummy yummy yummy rat pussy`,
+			`%blank`,
+			`%blank`,
+			`%blank`,
 		},
 	}
 
