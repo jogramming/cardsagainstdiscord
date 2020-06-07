@@ -5,7 +5,7 @@ func init() {
 		Name:        "bluebox",
 		Description: "Blue box expansion",
 		Prompts: []*PromptCard{
-			
+
 			&PromptCard{Prompt: `%s may pass, but %s will last forever.`},
 			&PromptCard{Prompt: `%s will never be the same after %s.`},
 			&PromptCard{Prompt: `"This is madness." "No, THIS IS %s!"`},
