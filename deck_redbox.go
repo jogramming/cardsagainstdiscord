@@ -15,7 +15,7 @@ func init() {
 			&PromptCard{Prompt: `And what did you bring for show and tell?`},
 			&PromptCard{Prompt: `As part of his contract, Prince won’t perform without %s in his dressing room.`},
 			&PromptCard{Prompt: `As part of his daily regimen, Anderson Cooper sets aside 15 minutes for %s.`},
-			&PromptCard{Prompt: `Awww, sick! I just say this skater do a 720 kickflip into %s!`},
+			&PromptCard{Prompt: `Awww, sick! I just saw this skater do a 720 kickflip into %s!`},
 			&PromptCard{Prompt: `Before %s, all we had was %s.`},
 			&PromptCard{Prompt: `Before I run for president, I must destroy all evidence of my involvement with %s.`},
 			&PromptCard{Prompt: `Call the law offices of Goldstein & Goldstein, because no one should have to tolerate %s in the workplace.`},
