@@ -47,7 +47,7 @@ func init() {
 			&PromptCard{Prompt: `What's up, YouTube? User DanTheMan wanted to see %s, so here we go.`},
 			&PromptCard{Prompt: `Why did the chicken cross the road? %s`},
 			&PromptCard{Prompt: `Why my mustache smell so bad? %s`},
-			&PromptCard{Prompt: `Yeah that's so hot.\nI'm so close.\nTalk about %s again!\nOH I'M CUMMING!`},
+			&PromptCard{Prompt: `Yeah that's so hot. I'm so close. Talk about %s again! OH I'M CUMMING!`},
 			&PromptCard{Prompt: `You can call me David Copperfield, because I'm about to make %s disappear.`},
 			&PromptCard{Prompt: `You city folk would never understand the quiet dignity of %s.`},
 		},
