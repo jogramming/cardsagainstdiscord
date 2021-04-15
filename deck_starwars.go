@@ -3,7 +3,7 @@ package cardsagainstdiscord
 func init() {
 	pack := &CardPack{
 		Name:        "star-wars",
-		Description: "Cards Against the Force. Compiled by https://discord.gg/thegalacticrepublic",
+		Description: "Cards Against the Force. Compiled by The Galactic Republic",
 		Prompts: []*PromptCard{
 			&PromptCard{Prompt: `%s & %s. The best of both worlds.`},
 			&PromptCard{Prompt: `%s and chill.`},
