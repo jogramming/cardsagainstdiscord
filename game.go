@@ -601,7 +601,7 @@ func (g *Game) presentStartRound() {
 	if g.VoteMode {
 		instructions += "\nAfter that you will all vote on the response"
 	} else {
-		instructions += "\nCardCzar: Wait until all players have picked cards(s) then select the best one(s)"
+		instructions += "\nCardCzar: Wait until all players have picked card(s) then select the best one(s)"
 	}
 
 	fields := []*discordgo.MessageEmbedField{
@@ -1055,7 +1055,7 @@ func (g *Game) presentWinners(winningPicks []*PickedResonse) {
 			winningPicksStr += "**" + v.Player.Username + "**"
 		}
 
-		title = fmt.Sprintf("%s Won the round!", winningPicksStr)
+		title = fmt.Sprintf("%s won the round!", winningPicksStr)
 	} else {
 		title = fmt.Sprintf("%s WON THE ENTIRE GAME!!!", wonFullGamePlayers)
 	}

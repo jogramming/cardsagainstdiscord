@@ -14,7 +14,7 @@ func init() {
 			&PromptCard{Prompt: `The Westboro Baptist Church is now picketing soldiers' funerals with signs that read 'GOD HATES %s!'`},
 			&PromptCard{Prompt: `What are two cards in your hand that you want to get rid of? %s and %s`},
 			&PromptCard{Prompt: `You can't wait forever. It's time to talk to your doctor about %s.`},
-			&PromptCard{Prompt: `Astronomers have discovered that the universe consists of 5% ordinary matter, 25% dark matter, and 70% %s.`},
+			&PromptCard{Prompt: `Astronomers have discovered that the universe consists of 5 percent ordinary matter, 25 percent dark matter, and 70 percent %s.`},
 			&PromptCard{Prompt: `BowWOW! is the first pet hotel in LA that offers %s for dogs.`},
 			&PromptCard{Prompt: `Hey, whatever happened to Renee Zellweger? %s`},
 			&PromptCard{Prompt: `Housekeeping! You want %s?`},
