@@ -16,7 +16,7 @@ func init() {
 			&PromptCard{Prompt: `I'll be %s. When the rain starts to fall. `},
 			&PromptCard{Prompt: `I didn't have to, because I was wearing my I heart %s sandwich board and ringing my bell. `},
 			&PromptCard{Prompt: `I think Chandler would have achieved phase 3 faster if his friends had tried %s. `},
-			&PromptCard{Prompt: `MORRRNING'S HEEEERE, %S is here.`},
+			&PromptCard{Prompt: `MORRRNING'S HEEEERE, %s is here.`},
 			&PromptCard{Prompt: `Home is never far away, home is %s.`},
 			&PromptCard{Prompt: `If you can't talk dirty dirty to me, how are you gonna talk dirty to her? Now tell me you wanna caress %s!`},
 			&PromptCard{Prompt: `I think Chandler would have achieved phase 3 faster if his friends had tried %s. `},
