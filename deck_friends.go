@@ -267,9 +267,9 @@ func init() {
 			`A piece of gravy soaked bread`,
 			`A giant poking device`,
 			`A can of soda with a thumb in it`,
-
-
 		},
 	}
 
 	AddPack(pack)
+
+}
