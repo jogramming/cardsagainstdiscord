@@ -1,15 +1,16 @@
 package main
 
 import (
-	"github.com/jonas747/cardsagainstdiscord"
-	"github.com/jonas747/dcmd"
-	"github.com/jonas747/discordgo"
-	"github.com/jonas747/dstate"
 	"log"
 	"net/http"
 	_ "net/http/pprof"
 	"os"
 	"strings"
+
+	"github.com/jonas747/cardsagainstdiscord"
+	"github.com/jonas747/dcmd"
+	"github.com/jonas747/discordgo"
+	"github.com/jonas747/dstate"
 )
 
 var cahManager *cardsagainstdiscord.GameManager
@@ -38,7 +39,7 @@ func main() {
 	cmdSys.Root.AddCommand(CreateGameCommand, dcmd.NewTrigger("create", "c").SetDisableInDM(true))
 	cmdSys.Root.AddCommand(StopCommand, dcmd.NewTrigger("stop", "end", "s").SetDisableInDM(true))
 	cmdSys.Root.AddCommand(KickCommand, dcmd.NewTrigger("kick").SetDisableInDM(true))
-	cmdSys.Root.AddCommand(PacksCommand, dcmd.NewTrigger("packs").SetDisableInDM(true))
+	cmdSys.Root.AddCommand(PacksCommand, dcmd.NewTrigger("packs", "decks").SetDisableInDM(true))
 
 	session.AddHandler(state.HandleEvent)
 	session.AddHandler(cmdSys.HandleMessageCreate)
