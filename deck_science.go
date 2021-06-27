@@ -2,8 +2,8 @@ package cardsagainstdiscord
 
 func init() {
 	pack := &CardPack{
-		Name:		 "science",
-		Description: "Science Pack - The Science Pack is a pack about the hit system of knowledge known worldwide as “science.” Written with Phil Plait (Bad Astronomy) and Zach Weinersmith (SMBC). 30 cards about captivating theories like evolution and global warming, with a special guest appearance by Uranus. All profits donated to the Cards Against Humanity & SMBC Science Ambassador Scholarship for women in STEM. Released March 30, 2015. Icon: An Erlenmeyer flask.",
+		Name:        "science",
+		Description: "Science Pack - The hit system of knowledge known worldwide as “science.”",
 		Prompts: []*PromptCard{
 			&PromptCard{Prompt: `A study published in Nature this week found that %s is good for you in small doses.`},
 			&PromptCard{Prompt: `Hey there, Young Scientists! Put on your labcoats and strap on your safety goggles, because today we're learning about %s!`},

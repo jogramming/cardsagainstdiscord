@@ -2,8 +2,8 @@ package cardsagainstdiscord
 
 func init() {
 	pack := &CardPack{
-		Name:		 "human",
-		Description: "Human Pack - 30 beautiful cards about the human condition straight from the hearts of our human writers.\n\nReleased: December 9, 2019 Icon: Vitruvian Man drawing",
+		Name:        "human",
+		Description: "Human Pack - 30 beautiful cards about the human condition straight from the hearts of our human writers",
 		Prompts: []*PromptCard{
 			&PromptCard{Prompt: `Do not go gentle into that good night. Rage, rage against %s?`},
 			&PromptCard{Prompt: `Sure, sex is great, but have you tried %s?`},

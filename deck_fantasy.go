@@ -2,8 +2,8 @@ package cardsagainstdiscord
 
 func init() {
 	pack := &CardPack{
-		Name:		 "fantasy",
-		Description: "Fantasy Pack - A pack co-written with make-believers Pat Rothfuss, Neil Gaiman, Sam Sykes, Myke Cole, Jacqueline Carey, Martha Wells, Sherwood Smith, Elizabeth Bear, and Wesley Chu. Released November 19, 2015. Icon: A Hitachi Magic Wand.\nv1.1a released Nov 2017; the only thing changed was the logo.\nv1.1b released with Nerd Bundle with a couple new cards.",
+		Name:        "fantasy",
+		Description: "Fantasy Pack - Dragons, wizards, Orlando Bloom, etc",
 		Prompts: []*PromptCard{
 			&PromptCard{Prompt: `And in the end, the dragon was not evil; he just wanted %s.`},
 			&PromptCard{Prompt: `Critics are raving about HBO's new Game of Thrones spin-off, "%s of %s."`},

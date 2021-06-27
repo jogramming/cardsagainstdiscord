@@ -2,8 +2,8 @@ package cardsagainstdiscord
 
 func init() {
 	pack := &CardPack{
-		Name:		 "food",
-		Description: "Food Pack - Originally released as three seperate promo packs sold with popsicles (cherry, coconut, and mango) during Pax Prime 2015. 30 cards about brekky gruffles and syrupy friend chortles. Co-written with Lucky Peach Magazine. Released to be purchased directly from CAH’s website on November 19, 2015, with one card changed.\nIcon: Crisscrossed knife and spoon.",
+		Name:        "food",
+		Description: "Food Pack - 30 cards about brekky gruffles and syrupy friend chortles",
 		Prompts: []*PromptCard{
 			&PromptCard{Prompt: `Aw babe, your burbs smell like %s.`},
 			&PromptCard{Prompt: `Don’t miss Rachel Ray’s hit new show, Cooking with %s.`},

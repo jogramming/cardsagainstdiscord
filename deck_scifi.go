@@ -3,7 +3,7 @@ package cardsagainstdiscord
 func init() {
 	pack := &CardPack{
 		Name:        "sci-fi",
-		Description: "Sci-Fi Pack - 30 cards about what will happen when humanity goes too far with technology. Written with famous authors including Pat Rothfuss. All profits donated to Worldbuilders. Released December 5, 2016. Icon: A rocket ship.\nv1.1 released Nov 2017; the only thing changed was the logo.",
+		Description: "Sci-Fi Pack - 30 cards about what will happen when humanity goes too far with technology",
 		Prompts: []*PromptCard{
 			&PromptCard{Prompt: `Computer! Display %s on screen. Enhance.`},
 			&PromptCard{Prompt: `Fear leads to anger. Anger leads to hate. Hate leads to %s.`},

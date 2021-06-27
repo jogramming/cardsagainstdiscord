@@ -2,8 +2,8 @@ package cardsagainstdiscord
 
 func init() {
 	pack := &CardPack{
-		Name:		 "pride",
-		Description: "Pride Pack - It’s Pride Month, the time of year when companies put a rainbow on their products to capitalize on gay culture. Fabulous!\n30 cards that completely encapsulate the queer experience.\nWritten by an elite squad of lesbians, bisexuals, gays, trans people, allies, and unicorns.\nAll profits donated to Howard Brown Health.\n\nReleased June 16, 2018 at Pride Chicago; June 18, 2018 in the CAH Store Icon: A four color (red, yellow, green, and blue) striped flag",
+		Name:        "pride",
+		Description: "Pride Pack - 30 cards that completely encapsulate the queer experience",
 		Prompts: []*PromptCard{
 			&PromptCard{Prompt: `Excuse me, straight man, but %s isn't for you, STRAIGHT MAN.`},
 			&PromptCard{Prompt: `GOD HATES %s!`},

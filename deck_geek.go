@@ -2,8 +2,8 @@ package cardsagainstdiscord
 
 func init() {
 	pack := &CardPack{
-		Name:		 "geek",
-		Description: "Geek Pack - 30 cards about video games, D&D, Game of Thrones, and all the other bullshit you like. Previously released in packs given away at PAX East and PAX Prime in 2013 and 2014. Released for sale on CAH's website May 3, 2016. Icon: A game controller D-Pad.\nThe cards are annoted with which PAX pack each card originally came from, but the annotations do not appear on the cards.\nv1.1a released Nov 2017; the only thing changed was the logo.\nv1.1b released with Nerd Bundle with one new card.",
+		Name:        "geek",
+		Description: "Geek Pack - 30 cards about video games, D&D, Game of Thrones, and all the other bullshit you like",
 		Prompts: []*PromptCard{
 			&PromptCard{Prompt: `%s is OP. Please nerf.`},
 			&PromptCard{Prompt: `%s is way better in %s mode. (Pax East 2014)`},

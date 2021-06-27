@@ -3,7 +3,7 @@ package cardsagainstdiscord
 func init() {
 	pack := &CardPack{
 		Name:        "2000s-nostalgia",
-		Description: "2000s Nostalgia Pack - Dude, where’s my car? The 2000s Nostalgia Pack comes with 30 new cards capitalizing on the surge of dopamine that floods your brain when you think about your childhood.\nChunky highlights.\nButterfly clips.\nBootcut jeans.\nBush did 9/11.\nYou’re such a Miranda!\nReleased November 5, 2019 Icon: block letter double zeroes with an \"s\"",
+		Description: "2000s Nostalgia Pack - Butterfly clips, Bootcut jeans, Bush did 9/11, etc",
 		Prompts: []*PromptCard{
 			&PromptCard{Prompt: `%s? That's a no from me, dawg.`},
 			&PromptCard{Prompt: `16 people. 39 days of %s. One Survivor.`},

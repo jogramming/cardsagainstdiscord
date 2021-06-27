@@ -2,8 +2,8 @@ package cardsagainstdiscord
 
 func init() {
 	pack := &CardPack{
-		Name:		 "theater",
-		Description: "Theatre Pack - As the Bard once said, “All the world’s a stage, and all the men and women merely members of our target demographic.” Hark! It’s the Theatre Pack, 30 cards about those things that are like movies but they happen right in front of you.\nWe’d like to thank our parents, our amazing director, and of course, God.\nLin-Manuel Miranda’s favorite pack.\nAll profits fund a grant program for innovative theater and comedy run by the Theater Communications Group.\n\nReleased: June 18, 2018 Icon: Theatre masks",
+		Name:        "theater",
+		Description: "Theatre Pack - Those things that are like movies but they happen right in front of you",
 		Prompts: []*PromptCard{
 			&PromptCard{Prompt: `Alright everybody, HOLD!
 Kelly, why is there %s on my stage?`},
