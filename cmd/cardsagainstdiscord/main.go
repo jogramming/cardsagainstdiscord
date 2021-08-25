@@ -1,15 +1,16 @@
 package main
 
 import (
-	"github.com/jonas747/cardsagainstdiscord"
-	"github.com/jonas747/dcmd"
-	"github.com/jonas747/discordgo"
-	"github.com/jonas747/dstate"
 	"log"
 	"net/http"
 	_ "net/http/pprof"
 	"os"
 	"strings"
+
+	"github.com/jonas747/cardsagainstdiscord/v2"
+	"github.com/jonas747/dcmd/v4"
+	"github.com/jonas747/discordgo/v2"
+	"github.com/jonas747/dstate/v4/inmemorytracker"
 )
 
 var cahManager *cardsagainstdiscord.GameManager
@@ -22,23 +23,27 @@ func panicErr(err error, msg string) {
 
 func main() {
 	session, err := discordgo.New(os.Getenv("DG_TOKEN"))
+	session.Intents = []discordgo.GatewayIntent{
+		discordgo.GatewayIntentGuilds,
+		discordgo.GatewayIntentGuildEmojis,
+		discordgo.GatewayIntentGuildMessages,
+		discordgo.GatewayIntentGuildMessageReactions,
+	}
 	panicErr(err, "Failed initializing discordgo")
 
 	cahManager = cardsagainstdiscord.NewGameManager(&cardsagainstdiscord.StaticSessionProvider{
 		Session: session,
 	})
 
-	state := dstate.NewState()
-	state.TrackMembers = false
-	state.TrackPresences = false
+	state := inmemorytracker.NewInMemoryTracker(inmemorytracker.TrackerConfig{}, 1)
 	session.StateEnabled = false
 
 	cmdSys := dcmd.NewStandardSystem("!cah")
 	cmdSys.State = state
-	cmdSys.Root.AddCommand(CreateGameCommand, dcmd.NewTrigger("create", "c").SetDisableInDM(true))
-	cmdSys.Root.AddCommand(StopCommand, dcmd.NewTrigger("stop", "end", "s").SetDisableInDM(true))
-	cmdSys.Root.AddCommand(KickCommand, dcmd.NewTrigger("kick").SetDisableInDM(true))
-	cmdSys.Root.AddCommand(PacksCommand, dcmd.NewTrigger("packs").SetDisableInDM(true))
+	cmdSys.Root.AddCommand(CreateGameCommand, dcmd.NewTrigger("create", "c").SetEnableInGuildChannels(true))
+	cmdSys.Root.AddCommand(StopCommand, dcmd.NewTrigger("stop", "end", "s").SetEnableInGuildChannels(true))
+	cmdSys.Root.AddCommand(KickCommand, dcmd.NewTrigger("kick").SetEnableInGuildChannels(true))
+	cmdSys.Root.AddCommand(PacksCommand, dcmd.NewTrigger("packs").SetEnableInGuildChannels(true))
 
 	session.AddHandler(state.HandleEvent)
 	session.AddHandler(cmdSys.HandleMessageCreate)
@@ -62,19 +67,19 @@ func main() {
 var CreateGameCommand = &dcmd.SimpleCmd{
 	ShortDesc: "Creates a cards against humanity game in this channel",
 	CmdArgDefs: []*dcmd.ArgDef{
-		&dcmd.ArgDef{Name: "packs", Type: dcmd.String, Default: "main", Help: "Packs seperated by space, or * to include all of them"},
+		{Name: "packs", Type: dcmd.String, Default: "main", Help: "Packs seperated by space, or * to include all of them"},
 	},
 	CmdSwitches: []*dcmd.ArgDef{
-		{Switch: "v", Name: "Vote mode, no cardczar"},
+		{Name: "v", Help: "Vote mode, no cardczar"},
 	},
 	RunFunc: func(data *dcmd.Data) (interface{}, error) {
 		voteMode := data.Switch("v").Bool()
 		pStr := data.Args[0].Str()
 		packs := strings.Fields(pStr)
 
-		_, err := cahManager.CreateGame(data.GS.ID, data.CS.ID, data.Msg.Author.ID, data.Msg.Author.Username, voteMode, packs...)
+		_, err := cahManager.CreateGame(data.GuildData.GS.ID, data.GuildData.CS.ID, data.Author.ID, data.Author.Username, voteMode, packs...)
 		if err == nil {
-			log.Println("Created a new game in ", data.CS.ID)
+			log.Println("Created a new game in ", data.GuildData.CS.ID)
 			return "", nil
 		}
 
@@ -90,7 +95,7 @@ var CreateGameCommand = &dcmd.SimpleCmd{
 var StopCommand = &dcmd.SimpleCmd{
 	ShortDesc: "Stops a cards against humanity game in this channel",
 	RunFunc: func(data *dcmd.Data) (interface{}, error) {
-		err := cahManager.TryAdminRemoveGame(data.Msg.Author.ID)
+		err := cahManager.TryAdminRemoveGame(data.Author.ID)
 		if err != nil {
 			if cahErr := cardsagainstdiscord.HumanizeError(err); cahErr != "" {
 				return cahErr, nil
@@ -107,12 +112,12 @@ var KickCommand = &dcmd.SimpleCmd{
 	ShortDesc:       "Kicks a player from the card against humanity game in this channel, only the game master can do this",
 	RequiredArgDefs: 1,
 	CmdArgDefs: []*dcmd.ArgDef{
-		&dcmd.ArgDef{Name: "user", Type: dcmd.UserID},
+		{Name: "user", Type: dcmd.UserID},
 	},
 	RunFunc: func(data *dcmd.Data) (interface{}, error) {
 		userID := data.Args[0].Int64()
 
-		err := cahManager.AdminKickUser(data.Msg.Author.ID, userID)
+		err := cahManager.AdminKickUser(data.Author.ID, userID)
 		if err != nil {
 			if cahErr := cardsagainstdiscord.HumanizeError(err); cahErr != "" {
 				return cahErr, nil

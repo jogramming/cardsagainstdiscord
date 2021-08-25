@@ -1,8 +1,9 @@
 package cardsagainstdiscord
 
 import (
-	"github.com/jonas747/discordgo"
 	"sync"
+
+	"github.com/jonas747/discordgo/v2"
 )
 
 type GameManager struct {

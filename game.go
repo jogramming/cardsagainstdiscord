@@ -2,7 +2,6 @@ package cardsagainstdiscord
 
 import (
 	"fmt"
-	"github.com/jonas747/discordgo"
 	"log"
 	"math/rand"
 	"runtime/debug"
@@ -11,6 +10,8 @@ import (
 	"sync"
 	"time"
 	"unicode/utf8"
+
+	"github.com/jonas747/discordgo/v2"
 )
 
 type GameState int
@@ -44,7 +45,7 @@ const (
 	GameExpireAfter        = time.Second * 300
 	GameExpireAfterPregame = time.Minute * 30
 
-	BlankCard       ResponseCard = "(write your own response)"
+	BlankCard ResponseCard = "(write your own response)"
 )
 
 var (

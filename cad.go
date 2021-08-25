@@ -2,9 +2,10 @@ package cardsagainstdiscord
 
 import (
 	"fmt"
-	"github.com/jonas747/discordgo"
-	"github.com/pkg/errors"
 	"strings"
+
+	"github.com/jonas747/discordgo/v2"
+	"github.com/pkg/errors"
 )
 
 var Packs = make(map[string]*CardPack)
