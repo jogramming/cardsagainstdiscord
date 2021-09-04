@@ -23,7 +23,7 @@ func init() {
 			&PromptCard{Prompt: `I got rhythm, I’ve got music, I’ve got %s. Who could ask for anything more?`},
 			&PromptCard{Prompt: `I may not be much to look at, but I fuck like %s.`},
 			&PromptCard{Prompt: `I tell you, it was a non-stop fuckfest. When it was over, my asshole looked like %s.`},
-			&PromptCard{Prompt: `I’ll take the BBQ bacon burger with friend egg and fuck it how about %s.`},
+			&PromptCard{Prompt: `I’ll take the BBQ bacon burger with fried egg, and fuck it how about %s.`},
 			&PromptCard{Prompt: `I’m sorry, sir, but your insurance plan doesn’t cover injuries caused by %s.`},
 			&PromptCard{Prompt: `I’ve had a horrible vision, father. I saw mountains crumbling, stars falling from the sky. I saw %s.`},
 			&PromptCard{Prompt: `If at first you don’t succeed, try %s.`},

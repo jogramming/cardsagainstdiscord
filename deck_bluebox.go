@@ -34,7 +34,7 @@ func init() {
 			&PromptCard{Prompt: `Hi MTV! My name is Kendra, I live in Malibu, I'm into %s, and I love to have a good time.`},
 			&PromptCard{Prompt: `Hi, this is Jim from accounting. We noticed a $1,200 charge labeled "%s." Can you explain?`},
 			&PromptCard{Prompt: `Honey, I have a new role-play I want to try tonight! You can be %s, and I'll be %s.`},
-			&PromptCard{Prompt: `How am I compensating for my tiny penis?%s`},
+			&PromptCard{Prompt: `How am I compensating for my tiny penis? %s`},
 			&PromptCard{Prompt: `I am become %s, destroyer of %s!`},
 			&PromptCard{Prompt: `I don't mean to brag, but they call me the Micheal Jordan of %s.`},
 			&PromptCard{Prompt: `I have a strict policy. First date, dinner. Second date, kiss. Third date, %s.`},
