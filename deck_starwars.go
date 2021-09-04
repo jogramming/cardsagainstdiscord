@@ -503,7 +503,7 @@ func init() {
 			`Boss Nass`,
 			`Boss Nass farting on your face`,
 			`bragging about kissing your sister`,
-			`braiding Princess Leia's pubse`,
+			`braiding Princess Leia's pubes`,
 			`C-3PO`,
 			`C-3PO giving a golden shover`,
 			`calling Darth Vader "Daddy" while he force chokes you`,
