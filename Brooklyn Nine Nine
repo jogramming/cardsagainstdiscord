@@ -2,8 +2,8 @@ package cardsagainstdiscord
 
 func init() {
 	pack := &CardPack{
-		Name:        "Brookly Nine Nine",
-		Description: "Brookly Nine Nine TV Show Themed",
+		Name:        "Brooklyn Nine Nine",
+		Description: "Brooklyn Nine Nine TV Show Themed",
 		Prompts: []*PromptCard{		
             &PromptCard{Prompt: `That's how we do %s in the Nine-Nine.`},
 			&PromptCard{Prompt: `Peralta, what are you doing? %s `},
