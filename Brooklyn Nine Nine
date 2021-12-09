@@ -113,7 +113,7 @@ func init() {
 			&PromptCard{Prompt: `When I was alone in her office, I changed her autocorrect. When she types in Wuntch, it gets replaced with %s.`},
 			&PromptCard{Prompt: `Where's Jake? Did you %s him, Terry?`},
 			&PromptCard{Prompt: `Thank you for %s my feelings.`},
-			&PromptCard{Prompt: `The magic of %s. I'm			&PromptCard{Prompt: ` in a state of total euphoria.`},
+			&PromptCard{Prompt: `The magic of %s. I'm in a state of total euphoria.`},
 			&PromptCard{Prompt: `Hey-hey! New %s alert! `},
 		},
 		Responses: []ResponseCard{
