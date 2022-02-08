@@ -115,7 +115,7 @@ func init() {
 			&PromptCard{Prompt: `Thank you for %s my feelings.`},
 			&PromptCard{Prompt: `The magic of %s. I'm in a state of total euphoria.`},
 			&PromptCard{Prompt: `Hey-hey! New %s alert! `},
-		},
+		}, 
 		Responses: []ResponseCard{
 			`Making a badass entrance and realizing you have fudge on cheek`,
 			`Your subordinate tells you to bone your husband`,
@@ -406,7 +406,7 @@ func init() {
 			`Change the auto-correct of your rival so that her surname auto corrects to 'Butt'`,
 			`Black NASA`,
 			`LeBron James's new school for black astronauts`,
-			` Giving each other road head`,
+			`Giving each other road head`,
 			`White pubes induced as a result of stress from a trial`,
 			`A good old-fashioned suck-off`,
 			`Fingerholes Bowling Alley`,
@@ -419,9 +419,11 @@ func init() {
 			`Glorified EMTs who sleep in bunk beds`,
 			`Clothes hanging off a genderless blob`,
 			`Don Johnson it`,
+			`%blank`,
 
 
 		},
 	}
 
 	AddPack(pack)
+}
