@@ -5,7 +5,7 @@ func init() {
 		Name:        "Brooklyn Nine Nine",
 		Description: "Brooklyn Nine Nine TV Show Themed",
 		Prompts: []*PromptCard{		
-      &PromptCard{Prompt: `That's how we do %s in the Nine-Nine.`},
+			&PromptCard{Prompt: `That's how we do %s in the Nine-Nine.`},
 			&PromptCard{Prompt: `Peralta, what are you doing? %s `},
 			&PromptCard{Prompt: `I once got arrested for %s `},
 			&PromptCard{Prompt: `The worst thing to say to a cop is %s`},
