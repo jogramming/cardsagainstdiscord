@@ -418,7 +418,7 @@ func init() {
 			`Mischief managed`,
 			`Glorified EMTs who sleep in bunk beds`,
 			`Clothes hanging off a genderless blob`,
-			`Don Johnson it`
+			`Don Johnson it`,
 
 
 		},
